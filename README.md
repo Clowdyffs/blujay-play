@@ -1,8 +1,8 @@
 # Blujay Play
 
-A small chess model, a board, and your move. A static browser demo for [Alex Ashworth’s portfolio](https://clowdydev.com), with a custom blue Chessground board and on-device inference.
+Play chess against a neural network that runs entirely in your browser. A static demo for [Alex Ashworth’s portfolio](https://clowdydev.com), built on Chessground with on-device inference.
 
-Play White, Black, or a random side. Click or drag pieces, promote to any legal piece, take back a turn, review the game, export PGN, and resume a saved game. Coordinate move entry is also available below the board. Sounds are synthesized locally and can be muted. There is no clock or difficulty slider; the model scores every legal move and selects its highest-scoring move without tree search.
+Play White, Black, or a random side — or just move a white piece to start. Click or drag pieces (dropping the king on its rook castles), promote from an on-board picker, take back a turn, review the game with the move list or arrow keys, export PGN, and resume a saved game. Keyboard users can Tab to a move field that accepts SAN (`Nf3`, `O-O`) or coordinates (`e2e4`). Move and capture sounds are short recordings of wooden pieces and can be muted. The layout fits the viewport without scrolling, from phones to wide desktops. There is no clock or difficulty slider; the model scores every legal move and selects its highest-scoring move without tree search.
 
 **Everything runs in the visitor’s browser.** The deployment serves static files, including the approved epoch-15 ONNX model. No accounts, server inference, analytics, API keys, Durable Objects, or connection to the Lichess bot service are required. The Lichess link opens that separate bot’s profile.
 
@@ -63,9 +63,9 @@ The included float32 model has 3,961,664 parameters, shared-board architecture v
 7a937a0f7cf2e0e762abaf82a1dbb983bee8f3ada2a6bf704f97844f2cbeb536
 ```
 
-The page does not download the model or WASM until **Let’s play** or **Resume game**. The first game fetches a 16.25 MB model and a 14.24 MB WASM runtime plus small support files (uncompressed sizes). HTTP caching lets later visits reuse versioned assets, subject to the browser’s cache. There is no offline service worker and no promise that an evicted cache stays available offline.
+The page does not download the model or WASM until a game needs it: **Play**, a first move on the board, or **Continue game** after a reload. The first game fetches a 16.25 MB model and a 14.24 MB WASM runtime plus small support files (uncompressed sizes). HTTP caching lets later visits reuse versioned assets, subject to the browser’s cache. There is no offline service worker and no promise that an evicted cache stays available offline.
 
-One WASM thread runs in a dedicated Web Worker; no WebGPU or cross-origin isolation is needed. Scores are evaluated in batches of at most 32 legal moves to bound temporary memory. The session is reused between games. Results are from the side-to-move perspective and are not centipawns or a demonstrated Elo rating. Exact score ties select the first supplied legal move; chess.js ordering can differ from another chess library.
+One WASM thread runs in a dedicated Web Worker; no WebGPU or cross-origin isolation is needed. Scores are evaluated in batches of at most 32 legal moves to bound temporary memory. The session is reused between games. Results are from the side-to-move perspective and are not centipawns or a demonstrated Elo rating. Exact score ties select the first supplied legal move; chess.js ordering can differ from another chess library. A move typically takes tens of milliseconds to choose, so the interface shows each reply no sooner than 450 ms after requesting it; otherwise the engine’s move would land on top of the player’s own. This is presentation only and does not change which move is chosen.
 
 Use HTTPS in production (localhost works for development). A modern browser with WebAssembly SIMD, module Workers, and Web Crypto is required. Device speed and memory affect loading and play. Only Chromium was exercised for this initial release; resized desktop viewports are not physical iOS/Safari testing.
 
@@ -73,6 +73,6 @@ For new weights, add a **new versioned model directory**, update the path and SH
 
 ## Source and licenses
 
-The complete playable application is **GPL-3.0-or-later**; see [LICENSE](LICENSE). Its deployed footer links to the source revision used to build it. Chessground supplies the board mechanics and Cburnett pieces; this app supplies its own controls, colors, and sounds. It is not the complete Lichess website.
+The complete playable application is **GPL-3.0-or-later**; see [LICENSE](LICENSE). The deployed page’s Source link points to the revision used to build it, and Credits & licenses opens the dependency notices. Chessground supplies the board mechanics and Cburnett pieces; this app supplies its own controls and colors. The move sounds are CC0 recordings; see the notices. It is not the complete Lichess website.
 
 The bundled ONNX weights, manifest, and encoding data are separately supplied under **CC BY 4.0**, attributed to Alex Ashworth. These downloadable files are public. The separate training source, datasets, and original checkpoint are not part of this repository. See [credits and dependency licenses](THIRD_PARTY_NOTICES.md).

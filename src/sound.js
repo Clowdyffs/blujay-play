@@ -1,23 +1,27 @@
-// Original synthesized sounds. No remote audio or copied Lichess recordings.
+import moveUrl from './sounds/move.wav';
+import captureUrl from './sounds/capture.wav';
+
+// Recorded wooden piece sounds (CC0, see THIRD_PARTY_NOTICES.md), decoded once and
+// played through Web Audio so they land with the move instead of after it.
+const sources = { move: moveUrl, capture: captureUrl };
 export class Sound {
-  constructor(enabled = true) { this.enabled = enabled; this.context = null; }
+  constructor(enabled = true) { this.enabled = enabled; this.context = null; this.buffers = null; }
   unlock() {
     if (!this.enabled) return;
-    try { this.context ??= new AudioContext(); this.context.resume().catch(() => {}); } catch { /* Sound is optional. */ }
+    try {
+      this.context ??= new AudioContext({ latencyHint: 'interactive' });
+      if (this.context.state !== 'running') this.context.resume().catch(() => {});
+      this.buffers ??= Promise.all(Object.entries(sources).map(async ([kind, url]) => {
+        const response = await fetch(url);
+        return [kind, await this.context.decodeAudioData(await response.arrayBuffer())];
+      })).then(Object.fromEntries).catch(() => { this.buffers = null; return {}; });
+    } catch { /* Sound is optional. */ }
   }
-  play(kind = 'move') {
-    if (!this.enabled || !this.context || this.context.state !== 'running') return;
-    const frequencies = kind === 'end' ? [523, 659, 784] : kind === 'check' ? [440, 554] : kind === 'capture' ? [180, 120] : [360];
-    frequencies.forEach((frequency, i) => {
-      const start = this.context.currentTime + i * 0.06;
-      const oscillator = this.context.createOscillator(); const gain = this.context.createGain();
-      oscillator.type = 'sine'; oscillator.frequency.setValueAtTime(frequency, start);
-      oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.55, start + 0.09);
-      gain.gain.setValueAtTime(0.0001, start); gain.gain.exponentialRampToValueAtTime(0.10, start + 0.004);
-      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.12);
-      oscillator.connect(gain); gain.connect(this.context.destination);
-      oscillator.start(start); oscillator.stop(start + 0.13);
-      oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
-    });
+  async play(kind = 'move') {
+    if (!this.enabled || !this.buffers || this.context?.state !== 'running') return;
+    const buffer = (await this.buffers)[kind];
+    if (!buffer) return;
+    const source = this.context.createBufferSource();
+    source.buffer = buffer; source.connect(this.context.destination); source.start();
   }
 }

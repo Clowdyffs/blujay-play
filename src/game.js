@@ -58,13 +58,18 @@ export class Game {
     this.lastTime = null; this.onChange();
   }
   resign() { this.revision++; this.replyOwner = null; this.thinking = false; this.resigned = true; this.onChange(); }
+  reset() {
+    this.revision++; this.replyOwner = null; this.chess = new Chess(); this.initialFen = DEFAULT_POSITION;
+    this.started = false; this.thinking = false; this.error = null; this.resigned = false; this.lastTime = null; this.onChange();
+  }
   result() {
-    if (this.resigned) return { title: 'You resigned', detail: 'A good time for a fresh board.', pgn: this.human === 'w' ? '0-1' : '1-0' };
-    if (this.chess.isCheckmate()) return { title: this.chess.turn() === this.human ? `Checkmate · ${this.engineName} wins` : 'Checkmate · You win', detail: 'Well played. Another game?', pgn: this.chess.turn() === 'w' ? '0-1' : '1-0' };
-    if (this.chess.isStalemate()) return { title: 'Draw by stalemate', detail: 'No legal moves, and no check.', pgn: '1/2-1/2' };
-    if (this.chess.isThreefoldRepetition()) return { title: 'Draw by repetition', detail: 'The same position appeared three times.', pgn: '1/2-1/2' };
-    if (this.chess.isInsufficientMaterial()) return { title: 'Draw · insufficient material', detail: 'Neither side can deliver checkmate.', pgn: '1/2-1/2' };
-    if (this.chess.isDraw()) return { title: 'Draw · fifty-move rule', detail: 'Fifty moves without a capture or pawn move.', pgn: '1/2-1/2' };
+    const winner = color => color === this.human ? 'You win' : `${this.engineName} wins`;
+    if (this.resigned) return { title: 'Resignation', detail: winner(this.human === 'w' ? 'b' : 'w'), pgn: this.human === 'w' ? '0-1' : '1-0' };
+    if (this.chess.isCheckmate()) return { title: 'Checkmate', detail: winner(this.chess.turn() === 'w' ? 'b' : 'w'), pgn: this.chess.turn() === 'w' ? '0-1' : '1-0' };
+    if (this.chess.isStalemate()) return { title: 'Stalemate', detail: 'Draw', pgn: '1/2-1/2' };
+    if (this.chess.isThreefoldRepetition()) return { title: 'Threefold repetition', detail: 'Draw', pgn: '1/2-1/2' };
+    if (this.chess.isInsufficientMaterial()) return { title: 'Insufficient material', detail: 'Draw', pgn: '1/2-1/2' };
+    if (this.chess.isDraw()) return { title: 'Fifty-move rule', detail: 'Draw', pgn: '1/2-1/2' };
     return null;
   }
   serialize() { return { version: 1, human: this.human, moves: this.chess.history({ verbose: true }).map(toUci), resigned: this.resigned, initialFen: this.initialFen }; }

@@ -56,6 +56,17 @@ test('resignation rejects a pending move, and exports the correct PGN result', a
   const g = new Game(); const d=defer();g.start('w');g.play('e2e4');const p=g.requestReply({choose:()=>d.promise});
   g.resign();d.resolve({move:'e7e5'});await p;assert.equal(g.chess.history().length,1);assert.equal(g.over,true);assert.match(g.pgn('Test'),/\[Result "0-1"\]/);
 });
+test('reset returns to an unstarted board and rejects a pending reply', async () => {
+  const g = new Game(); const d = defer(); g.start('w'); g.play('e2e4');
+  const pending = g.requestReply({choose:()=>d.promise}); g.reset();
+  d.resolve({move:'e7e5'}); await pending;
+  assert.equal(g.started,false); assert.equal(g.thinking,false); assert.equal(g.chess.history().length,0); assert.equal(g.result(),null);
+});
+test('results name the winner from the human perspective', () => {
+  const mate = new Game(undefined, 'Bot'); mate.start('b','7k/6Q1/6K1/8/8/8/8/8 b - - 0 1'); assert.deepEqual(mate.result(), {title:'Checkmate',detail:'Bot wins',pgn:'1-0'});
+  const won = new Game(undefined, 'Bot'); won.start('w','7k/6Q1/6K1/8/8/8/8/8 b - - 0 1'); assert.equal(won.result().detail,'You win');
+  const resigned = new Game(undefined, 'Bot'); resigned.start('b'); resigned.resign(); assert.deepEqual(resigned.result(), {title:'Resignation',detail:'Bot wins',pgn:'1-0'});
+});
 test('save and restore replay full history, including repetition and color', () => {
   const g = new Game();g.start('w');
   for (const m of ['g1f3','g8f6','f3g1','f6g8','g1f3','g8f6','f3g1','f6g8']) g.apply(m);

@@ -16,209 +16,349 @@ const storage = {
   write(key, value) { try { localStorage.setItem('chess-play:' + key, JSON.stringify(value)); } catch { /* Private browsing or full storage: play still works. */ } },
 };
 const sourceUrl = config.sourceUrl + (typeof __APP_COMMIT__ !== 'undefined' && __APP_COMMIT__ ? '/tree/' + __APP_COMMIT__ : '');
+const roles = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
+const values = { p: 1, n: 3, b: 3, r: 5, q: 9 };
+// A reply faster than this lands on top of the player's own move; pad it so each move is seen and heard.
+const MIN_REPLY_MS = 450;
+const piece = (role, color) => `<piece class="${role} ${color}"></piece>`;
+const tool = (action, name, label) => `<button type="button" class="tool" data-action="${action}" aria-label="${label}" title="${label}">${icon(name)}</button>`;
+
 document.querySelector('#app').innerHTML = `
-  <div class="site-shell">
-    <header class="site-header">
-      <a class="wordmark" href="./" aria-label="${config.name} home"><span class="brand-bird">${bird}</span>${config.name.toLowerCase()}<span class="wordmark-note">/ play</span></a>
-      <nav aria-label="Site navigation"><a href="${config.portfolioUrl}">Portfolio ${icon('arrow')}</a><a href="${sourceUrl}" target="_blank" rel="noreferrer">Source ${icon('arrow')}</a></nav>
-    </header>
-    <main>
-      <section class="intro" aria-labelledby="page-title">
-        <div><p class="eyebrow">A LITTLE EXPERIMENT IN CHESS</p><h1 id="page-title">Your move<span>.</span></h1></div>
-        <p class="intro-copy">Meet ${config.name}, my homemade chess model.<br> Pull up a chair. It plays right in your browser.</p>
-      </section>
-      <section class="play-layout" aria-label="Play chess">
-        <div class="board-column">
-          <div class="player-row" id="top-player"></div>
-          <div class="board-frame"><div id="board" class="cg-wrap" role="group" aria-label="Chessboard. Click or drag to move. Keyboard move entry is below the board."></div>
-            <div id="review-banner" class="review-banner" hidden>Reviewing the game <button id="return-live">Back to live ${icon('arrowRight')}</button></div>
-          </div>
-          <div class="player-row" id="bottom-player"></div>
-          <div class="board-tools">
-            <span id="board-hint">Click or drag a piece to move</span>
-            <div class="tool-group"><button class="icon-button" id="flip" aria-label="Flip board" title="Flip board (F)">${icon('flip')}</button><button class="icon-button" id="sound" aria-label="Mute sounds" aria-pressed="false" title="Toggle sounds">${icon('volume')}</button></div>
-          </div>
-          <details class="keyboard-play"><summary>Keyboard play</summary><form id="move-form"><label for="move-input">Move in coordinate notation</label><div><input id="move-input" placeholder="e2e4" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="5" list="legal-moves" aria-describedby="move-help"><button type="submit" class="small-button">Move</button></div><datalist id="legal-moves"></datalist><p id="move-help">Use e2e4, or e7e8q to promote. Arrow keys browse the move history.</p><p id="move-error" role="alert"></p></form></details>
+  <header class="topbar">
+    <a class="brand" href="./">${bird}<span>${escapeHtml(config.name.toLowerCase())}</span></a>
+    <nav class="links" aria-label="Links">
+      <a href="${config.lichessUrl}" target="_blank" rel="noreferrer" title="Play ${escapeHtml(config.name)} on Lichess">Lichess${icon('external')}</a>
+      <a href="${sourceUrl}" target="_blank" rel="noreferrer" title="Source code (GPL-3.0)">Source${icon('external')}</a>
+      <a href="${config.portfolioUrl}">Portfolio${icon('external')}</a>
+    </nav>
+  </header>
+  <main class="stage">
+    <section class="board-col" aria-label="Board">
+      <div class="player" id="player-top"></div>
+      <div class="board-wrap" id="board-wrap">
+        <div id="board" class="cg-wrap" role="application" aria-label="Chessboard"></div>
+        <div id="promotion" class="promotion cg-wrap" role="dialog" aria-label="Promote pawn" hidden></div>
+      </div>
+      <div class="player" id="player-bottom"></div>
+    </section>
+    <aside class="side" aria-label="Game">
+      <div class="setup" id="setup">
+        <div class="bot-card">
+          <span class="avatar bot">${bird}</span>
+          <h1>${escapeHtml(config.name)}<span class="tag">BOT</span></h1>
+          <p>${escapeHtml(config.tagline)}</p>
         </div>
-        <aside class="game-panel" aria-label="Game controls">
-          <div class="panel-heading"><span class="eyebrow">THE MATCH</span><span class="quiet-badge">No clock</span></div>
-          <div class="status-block" role="status" aria-live="polite" aria-atomic="true"><h2 id="status-title">Ready when you are.</h2><p id="status-detail">Choose your side. Take your time.</p></div>
-          <div id="setup">
-            <span class="field-label" id="side-label">I’LL PLAY AS</span>
-            <div class="side-picker" role="group" aria-labelledby="side-label"><button data-side="w" class="selected" aria-pressed="true"><span class="side-disc white"></span>White</button><button data-side="b" aria-pressed="false"><span class="side-disc black"></span>Black</button><button data-side="random" aria-pressed="false"><span class="random-disc">◐</span>Random</button></div>
-            <button id="start" class="primary-button">Let’s play ${icon('arrowRight')}</button>
-            <p class="download-note">First game downloads the engine.<br>After that, every move stays on your device.</p>
-          </div>
-          <div id="loading" hidden><div class="progress-track"><div id="progress-bar"></div></div><p id="loading-detail" class="small-muted">Preparing the engine…</p></div>
-          <div id="error-box" class="error-box" hidden><p id="engine-error"></p><button id="retry" class="small-button">Try again</button></div>
-          <div id="game-actions" hidden><button id="new-game" class="secondary-button">New game ${icon('arrowRight')}</button><div class="secondary-actions"><button id="undo" class="text-button">${icon('undo')}Take back</button><button id="resign" class="text-button">${icon('flag')}Resign</button></div></div>
-          <section class="history-section" aria-labelledby="history-title"><div class="section-heading"><h3 id="history-title">Moves</h3><span id="move-count" class="small-muted">0 played</span></div><div id="move-list" class="move-list"><div class="history-empty"><span class="empty-lines"><i></i><i></i><i></i></span>Your story starts on the board.</div></div><div class="history-nav"><button class="icon-button" id="history-first" aria-label="First position">${icon('first')}</button><button class="icon-button" id="history-back" aria-label="Previous move">${icon('back')}</button><button class="icon-button" id="history-next" aria-label="Next move">${icon('next')}</button><button class="icon-button" id="history-last" aria-label="Latest position">${icon('last')}</button><span class="history-divider"></span><button class="icon-button" id="download-pgn" aria-label="Download PGN" title="Download PGN">${icon('download')}</button></div></section>
-          <div class="local-note">${icon('chip')}<div><strong>Played here. Kept here.</strong><span>Your game is saved in this browser.</span></div></div>
-        </aside>
-      </section>
-      <section class="below-board"><p>A small model with a mind of its own.<br><span>Built by <a href="${config.portfolioUrl}">${config.author}</a>.</span></p><div><button id="about" class="text-button">About this experiment ${icon('arrow')}</button><a class="text-button" href="${config.lichessUrl}" target="_blank" rel="noreferrer">Play on Lichess ${icon('arrow')}</a></div></section>
-    </main>
-    <footer><span>Made for the love of the game.</span><span><a href="https://github.com/lichess-org/chessground" target="_blank" rel="noreferrer">Board by Chessground</a><span class="footer-dot">·</span><a href="${sourceUrl}" target="_blank" rel="noreferrer">GPL-3.0+ source</a></span></footer>
-  </div>
-  <dialog id="promotion-dialog" aria-labelledby="promotion-title"><h2 id="promotion-title">A little promotion.</h2><p>Choose your new piece.</p><div id="promotion-options" class="promotion-options cg-wrap"></div><button id="cancel-promotion" class="text-button">Cancel move</button></dialog>
-  <dialog id="confirm-dialog" aria-labelledby="confirm-title"><h2 id="confirm-title"></h2><p id="confirm-detail"></p><div class="dialog-actions"><button id="confirm-cancel" class="secondary-button">Keep playing</button><button id="confirm-yes" class="primary-button">Continue</button></div></dialog>
-  <dialog id="about-dialog" aria-labelledby="about-title"><button class="icon-button dialog-close" id="close-about" aria-label="Close about">${icon('close')}</button><span class="eyebrow">BEHIND THE BOARD</span><h2 id="about-title">A chess model, made from scratch.</h2><p>${config.name} is my experiment in teaching a small neural network to choose chess moves. This demo uses the 3.96-million-parameter, epoch-15 model. It scores every legal move and picks its favorite, without searching a tree of future positions.</p><p>The model runs on your device using ONNX Runtime Web. The board stays responsive while a separate browser worker does the thinking. There’s no account, move API, or analytics.</p><p>This is an experiment, not a claim of playing strength. Try an unusual position—or just enjoy a game.</p><div class="about-links"><a href="${sourceUrl}" target="_blank" rel="noreferrer">Explore the source ${icon('arrow')}</a><a href="./licenses/THIRD_PARTY_NOTICES.md" target="_blank" rel="noreferrer">Credits & licenses ${icon('arrow')}</a></div><p class="small-muted">Chessground board · chess.js rules · original synthesized sounds.<br>App source: GPL-3.0-or-later. Model weights: CC BY 4.0.</p></dialog>
-  <div id="toast" class="toast" role="status" hidden></div>
+        <p class="setup-label" id="side-label">Play as</p>
+        <div class="side-picker cg-wrap" role="radiogroup" aria-labelledby="side-label">
+          <button type="button" role="radio" data-side="w">${piece('king', 'white')}<span>White</span></button>
+          <button type="button" role="radio" data-side="random"><span class="random-king">${piece('king', 'white')}${piece('king', 'black')}</span><span>Random</span></button>
+          <button type="button" role="radio" data-side="b">${piece('king', 'black')}<span>Black</span></button>
+        </div>
+        <button type="button" class="button primary" data-action="start">Play</button>
+      </div>
+      <div class="game" id="game">
+        <div class="moves" id="moves"></div>
+        <form class="move-entry" id="move-form"><label class="sr-only" for="move-input">Type a move</label><input id="move-input" placeholder="Type a move, like Nf3" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="10"></form>
+        <div class="notice" id="notice" role="alert" hidden><p id="notice-text"></p><button type="button" class="button" data-action="retry">${icon('retry')}Retry</button></div>
+        <button type="button" class="button primary resume" id="resume" data-action="resume" hidden>Continue game</button>
+        <div class="toolbar">
+          <div class="tool-group">${tool('first', 'first', 'First move')}${tool('back', 'back', 'Previous move')}${tool('next', 'next', 'Next move')}${tool('last', 'last', 'Latest move')}</div>
+          <div class="tool-group">${tool('flip', 'flip', 'Flip board')}${tool('sound', 'volume', 'Mute sounds')}${tool('pgn', 'download', 'Download PGN')}</div>
+        </div>
+        <div class="controls" id="controls">
+          <button type="button" class="button" data-action="undo">${icon('undo')}Takeback</button>
+          <button type="button" class="button" data-action="resign">${icon('flag')}Resign</button>
+          <button type="button" class="button" data-action="new" id="new-game">${icon('plus')}New game</button>
+        </div>
+        <div class="controls confirm" id="confirm" hidden>
+          <span id="confirm-text"></span>
+          <button type="button" class="button" data-action="cancel">Cancel</button>
+          <button type="button" class="button danger" data-action="confirm" id="confirm-yes"></button>
+        </div>
+      </div>
+      <footer class="credits"><span>© 2026 ${escapeHtml(config.author)}</span><a href="./licenses/THIRD_PARTY_NOTICES.md" target="_blank" rel="noreferrer">Credits &amp; licenses</a></footer>
+    </aside>
+  </main>
+  <div class="sr-only" id="announcer" aria-live="polite"></div>
 `;
 
-let selectedSide = 'w'; let orientation = 'white'; let reviewPly = null;
-let ready = false; let loading = false; let loadError = null; let loadAttempt = 0;
-let lastRenderedPly = 0; let promotion = null; let confirmAction = null;
+let selectedSide = ['w', 'b', 'random'].includes(storage.read('side')) ? storage.read('side') : 'w';
+let orientation = selectedSide === 'b' ? 'black' : 'white';
+let reviewPly = null; let promotion = null; let confirming = null;
+let ready = false; let loading = false; let loadError = null; let loadAttempt = 0; let loadProgress = 0;
+let lastRenderedPly = 0; let lastShownPly = -1; let drawQueued = false;
 const sound = new Sound(storage.read('sound') !== false);
 const engine = new EngineClient(config.engine, progress => {
-  if (progress.stage === 'download') {
-    $('loading-detail').textContent = `Downloading model · ${(progress.loaded / 1e6).toFixed(1)} / ${(progress.total / 1e6).toFixed(1)} MB`;
-    $('progress-bar').style.width = Math.round(progress.loaded / progress.total * 85) + '%';
-  } else { $('loading-detail').textContent = 'Preparing the engine on your device…'; $('progress-bar').style.width = '92%'; }
+  // The WASM runtime compiles after the model download without byte progress, so it owns the last stretch.
+  loadProgress = progress.stage === 'download' ? progress.loaded / progress.total * 0.85 : 0.92;
+  const bar = document.querySelector('.player .progress i');
+  if (bar) { bar.style.width = Math.round(loadProgress * 100) + '%'; } else render();
 });
+const pacedEngine = {
+  async choose(fen, moves) {
+    const started = performance.now();
+    const result = await engine.choose(fen, moves);
+    const rest = MIN_REPLY_MS - (performance.now() - started);
+    if (rest > 0) await new Promise(resolve => setTimeout(resolve, rest));
+    return result;
+  },
+};
 const game = new Game(() => render(), config.name);
+const saved = storage.read('game');
+if (saved) { try { game.restore(saved); orientation = colorName(game.human); lastRenderedPly = game.chess.history().length; } catch { storage.write('game', null); } }
 const ground = Chessground($('board'), {
-  fen: game.chess.fen(), orientation, coordinates: true, coordinatesOnSquares: false,
-  animation: { enabled: !matchMedia('(prefers-reduced-motion: reduce)').matches, duration: 160 },
-  movable: { free: false, color: undefined, dests: new Map(), events: { after: onBoardMove }, rookCastle: false },
+  fen: game.chess.fen(), orientation, coordinates: true, ranksPosition: 'left',
+  animation: { enabled: !matchMedia('(prefers-reduced-motion: reduce)').matches, duration: 180 },
+  movable: { free: false, color: undefined, dests: new Map(), showDests: true, events: { after: onBoardMove } },
   premovable: { enabled: false }, drawable: { enabled: true, visible: true },
 });
-function persist() { if (game.started) storage.write('game', game.serialize()); }
-function history() { return game.chess.history({ verbose: true }); }
-function shownBoard() { const moves = history(); return reviewPly === null ? game.chess : new Chess(reviewPly ? moves[reviewPly - 1].after : game.initialFen); }
-function playerRow(color) {
-  const human = color[0] === game.human;
-  const active = game.started && !game.over && game.chess.turn() === color[0];
-  return `<div class="player-identity"><span class="avatar ${human ? 'human-avatar' : 'engine-avatar'}">${human ? icon('user') : bird}</span><div><strong>${human ? 'You' : config.name}</strong><span>${human ? color[0].toUpperCase() + color.slice(1) + ' pieces' : 'Homemade neural model'}</span></div></div><span class="player-tag ${active ? 'active' : ''}">${active ? '<i></i>' : ''}${human ? 'HUMAN' : 'ON YOUR DEVICE'}</span>`;
-}
+
+const history = () => game.chess.history({ verbose: true });
+const currentPly = () => reviewPly ?? history().length;
+const humanColor = () => game.started ? game.human : orientation[0];
 function render() {
-  for (const choice of document.querySelectorAll('[data-side]')) { choice.classList.toggle('selected', choice.dataset.side === selectedSide); choice.setAttribute('aria-pressed', String(choice.dataset.side === selectedSide)); }
-  const moves = history(); const shown = shownBoard(); const live = reviewPly === null;
-  const playable = ready && live && game.humanTurn && !game.thinking && !promotion;
-  ground.set({ fen: shown.fen(), orientation, turnColor: colorName(shown.turn()), check: shown.isCheck(),
-    lastMove: (live ? moves.at(-1) : moves[reviewPly - 1]) ? [(live ? moves.at(-1) : moves[reviewPly - 1]).from, (live ? moves.at(-1) : moves[reviewPly - 1]).to] : [],
-    movable: { color: playable ? colorName(game.human) : undefined, dests: playable ? legalDests(game.chess) : new Map() },
-  });
-  $('top-player').innerHTML = playerRow(orientation === 'white' ? 'black' : 'white');
-  $('bottom-player').innerHTML = playerRow(orientation);
-  $('review-banner').hidden = live;
-  $('setup').hidden = game.started;
-  $('game-actions').hidden = !game.started;
-  $('loading').hidden = !loading;
-  $('error-box').hidden = !(loadError || game.error);
-  $('engine-error').textContent = loadError || game.error || '';
-  const result = game.result();
-  let title, detail;
-  if (!game.started) { title = 'Ready when you are.'; detail = 'Choose your side. Take your time.'; }
-  else if (loading) { title = 'A moment to settle in.'; detail = 'Getting the engine ready on your device.'; }
-  else if (loadError || game.error) { title = 'Let’s try that again.'; detail = 'Your game is safe. The engine needs a retry.'; }
-  else if (result) { title = result.title; detail = result.detail; }
-  else if (!ready) { title = 'Welcome back.'; detail = 'Resume your saved game when you’re ready.'; }
-  else if (game.thinking) { title = `${config.name} is thinking…`; detail = 'Finding a move, right here on your device.'; }
-  else { title = game.humanTurn ? (game.chess.isCheck() ? 'You’re in check.' : 'Your move.') : `${config.name} to move.`; detail = game.humanTurn ? 'The board is yours.' : 'One position. All the possibilities.'; }
-  $('status-title').textContent = title; $('status-detail').textContent = detail;
-  $('status-title').classList.toggle('thinking', game.thinking || loading);
-  $('undo').disabled = !moves.some(move => move.color === game.human) || loading;
-  $('resign').disabled = game.over || loading;
-  $('move-input').disabled = !playable;
-  $('move-form').querySelector('button').disabled = !playable;
-  $('legal-moves').innerHTML = playable ? game.chess.moves({ verbose: true }).map(m => `<option value="${toUci(m)}">${m.san}</option>`).join('') : '';
-  $('download-pgn').disabled = !moves.length;
-  $('history-first').disabled = !moves.length || reviewPly === 0;
-  $('history-back').disabled = !moves.length || reviewPly === 0;
-  $('history-next').disabled = live;
-  $('history-last').disabled = live;
-  $('move-count').textContent = `${moves.length} played`;
-  if (moves.length) {
-    let html = '';
-    for (let i = 0; i < moves.length; i += 2) {
-      html += `<div class="move-pair"><span>${Math.floor(i / 2) + 1}.</span>${[i, i + 1].map(j => moves[j] ? `<button data-ply="${j + 1}" class="${(live ? moves.length : reviewPly) === j + 1 ? 'current' : ''}" aria-label="Move ${Math.floor(j / 2) + 1}, ${moves[j].color === 'w' ? 'white' : 'black'}, ${escapeHtml(moves[j].san)}" ${(live ? moves.length : reviewPly) === j + 1 ? 'aria-current="step"' : ''}>${escapeHtml(moves[j].san)}</button>` : '<span></span>').join('')}</div>`;
-    }
-    $('move-list').innerHTML = html;
-    if (live && moves.length !== lastRenderedPly) $('move-list').scrollTop = $('move-list').scrollHeight;
-  } else $('move-list').innerHTML = '<div class="history-empty"><span class="empty-lines"><i></i><i></i><i></i></span>Your story starts on the board.</div>';
-  if (moves.length > lastRenderedPly && ready) sound.play(result ? 'end' : game.chess.isCheck() ? 'check' : moves.at(-1).captured ? 'capture' : 'move');
+  if (drawQueued) return;
+  drawQueued = true;
+  queueMicrotask(() => { drawQueued = false; draw(); });
+}
+// Chessground also accepts the king dropped on its own rook as castling.
+function boardDests(chess) {
+  const dests = legalDests(chess);
+  for (const move of chess.moves({ verbose: true })) {
+    if (/[kq]/.test(move.flags)) dests.get(move.from).push((move.flags.includes('k') ? 'h' : 'a') + move.from[1]);
+  }
+  return dests;
+}
+function material(board) {
+  const count = { w: { p: 0, n: 0, b: 0, r: 0, q: 0 }, b: { p: 0, n: 0, b: 0, r: 0, q: 0 } };
+  for (const row of board.board()) for (const square of row) if (square && square.type !== 'k') count[square.color][square.type]++;
+  const extra = { w: [], b: [] }; let score = 0;
+  for (const type of ['p', 'n', 'b', 'r', 'q']) {
+    const diff = count.w[type] - count.b[type];
+    score += diff * values[type];
+    if (diff) extra[diff > 0 ? 'w' : 'b'].push([type, Math.abs(diff)]);
+  }
+  return { extra, score };
+}
+function playerRow(color, board) {
+  const human = color === humanColor();
+  const { extra, score } = material(board);
+  const lead = color === 'w' ? score : -score;
+  const pieces = extra[color].map(([type, n]) => `<span>${piece(roles[type], 'white').repeat(n)}</span>`).join('');
+  let status = '';
+  if (!human && loading) status = `<span class="status">Loading<span class="progress"><i style="width:${Math.round(loadProgress * 100)}%"></i></span></span>`;
+  else if (!human && game.thinking) status = '<span class="status thinking" role="img" aria-label="Thinking"><i></i><i></i><i></i></span>';
+  return `<span class="avatar${human ? '' : ' bot'}">${human ? icon('user') : bird}</span>`
+    + `<span class="name">${human ? 'You' : `${escapeHtml(config.name)}<span class="tag">BOT</span>`}</span>`
+    + `<span class="material cg-wrap">${pieces}${lead > 0 ? `<em>+${lead}</em>` : ''}</span>${status}`;
+}
+const scoreText = pgn => ({ '1-0': '1–0', '0-1': '0–1' }[pgn] ?? '½–½');
+function moveCell(move, n, ply) {
+  const current = n === ply;
+  return `<button type="button" class="move${current ? ' current' : ''}" data-ply="${n}" aria-label="${Math.ceil(n / 2)}${move.color === 'w' ? '.' : '…'} ${escapeHtml(move.san)}"${current ? ' aria-current="step"' : ''}>${escapeHtml(move.san)}</button>`;
+}
+function reveal(container, element) {
+  if (!element) return;
+  const box = container.getBoundingClientRect(); const rect = element.getBoundingClientRect();
+  if (rect.top < box.top) container.scrollTop += rect.top - box.top - 6;
+  else if (rect.bottom > box.bottom) container.scrollTop += rect.bottom - box.bottom + 6;
+  if (rect.left < box.left) container.scrollLeft += rect.left - box.left - 6;
+  else if (rect.right > box.right) container.scrollLeft += rect.right - box.right + 6;
+}
+function draw() {
+  const moves = history(); const live = reviewPly === null; const ply = live ? moves.length : reviewPly;
+  const shown = live ? game.chess : new Chess(ply ? moves[ply - 1].after : game.initialFen);
+  const setup = !game.started; const result = game.result(); const error = loadError || game.error;
+  const playable = !promotion && live && (setup ? selectedSide === 'w' : game.humanTurn && !game.thinking);
+  const last = ply ? moves[ply - 1] : null;
+  if (!promotion) {
+    const board = { orientation, turnColor: colorName(shown.turn()), check: shown.isCheck(), lastMove: last ? [last.from, last.to] : undefined,
+      movable: { color: playable ? colorName(setup ? 'w' : game.human) : undefined, dests: playable ? boardDests(game.chess) : new Map() } };
+    // Only replace pieces when the position changed, so drawn arrows survive status updates.
+    if (ground.getFen() !== shown.fen().split(' ')[0]) board.fen = shown.fen();
+    ground.set(board);
+  }
+  const top = orientation === 'white' ? 'b' : 'w';
+  $('player-top').innerHTML = playerRow(top, shown);
+  $('player-bottom').innerHTML = playerRow(top === 'w' ? 'b' : 'w', shown);
+
+  $('setup').hidden = !setup; $('game').hidden = setup;
+  for (const choice of document.querySelectorAll('[data-side]')) choice.setAttribute('aria-checked', String(choice.dataset.side === selectedSide));
+
+  const list = $('moves'); const hadFocus = list.contains(document.activeElement);
+  let html = '';
+  for (let i = 0; i < moves.length; i += 2) {
+    html += `<span class="index">${i / 2 + 1}</span>${moveCell(moves[i], i + 1, ply)}${moves[i + 1] ? moveCell(moves[i + 1], i + 2, ply) : '<span class="move"></span>'}`;
+  }
+  if (result) html += `<div class="result"><strong>${scoreText(result.pgn)}</strong><span>${escapeHtml(result.title)} · ${escapeHtml(result.detail)}</span></div>`;
+  list.innerHTML = html;
+  if (ply !== lastShownPly || moves.length !== lastRenderedPly) {
+    if (live) { list.scrollTop = list.scrollHeight; list.scrollLeft = list.scrollWidth; } else reveal(list, list.querySelector('.current'));
+    lastShownPly = ply;
+  }
+  if (hadFocus) list.querySelector('.current')?.focus();
+
+  $('notice').hidden = !error; $('notice-text').textContent = error ?? '';
+  $('resume').hidden = !(game.started && !game.over && !ready && !loading && !error && !game.humanTurn);
+  const tools = Object.fromEntries([...document.querySelectorAll('#game [data-action]')].map(b => [b.dataset.action, b]));
+  tools.first.disabled = tools.back.disabled = ply === 0;
+  tools.next.disabled = tools.last.disabled = live;
+  tools.last.classList.toggle('attention', !live);
+  tools.pgn.disabled = !moves.length;
+  tools.sound.innerHTML = icon(sound.enabled ? 'volume' : 'mute');
+  tools.sound.title = sound.enabled ? 'Mute sounds' : 'Unmute sounds';
+  tools.sound.setAttribute('aria-label', tools.sound.title);
+  tools.undo.disabled = !moves.some(move => move.color === game.human);
+  tools.resign.disabled = game.over;
+  tools.new.classList.toggle('primary', game.over);
+  $('controls').hidden = !!confirming; $('confirm').hidden = !confirming;
+  if (confirming) {
+    $('confirm-text').textContent = confirming === 'resign' ? 'Resign this game?' : 'Abandon this game?';
+    $('confirm-yes').textContent = confirming === 'resign' ? 'Resign' : 'New game';
+  }
+
+  if (moves.length > lastRenderedPly) {
+    const move = moves.at(-1);
+    void sound.play(move.captured ? 'capture' : 'move');
+    $('announcer').textContent = `${move.color === game.human ? 'You' : config.name} played ${move.san}.${result ? ` ${result.title}. ${result.detail}.` : ''}`;
+  }
   lastRenderedPly = moves.length;
-  $('board-hint').textContent = !game.started ? 'Choose your side to start' : !live ? 'Use the arrows to explore this game' : game.over ? 'A game well spent' : game.thinking ? 'Thinking on your device' : 'Click or drag a piece to move';
-  $('sound').innerHTML = icon(sound.enabled ? 'volume' : 'mute');
-  $('sound').setAttribute('aria-label', sound.enabled ? 'Mute sounds' : 'Enable sounds');
-  $('sound').setAttribute('aria-pressed', String(!sound.enabled));
-  // Offer an explicit resume after a page reload, without downloading anything on arrival.
-  let resume = $('resume');
-  if (game.started && !ready && !loading && !loadError && !game.over) {
-    if (!resume) { resume = document.createElement('button'); resume.id = 'resume'; resume.className = 'primary-button'; resume.textContent = 'Resume game'; resume.onclick = () => ensureReady(); $('game-actions').prepend(resume); }
-  } else resume?.remove();
-  persist();
+  if (game.started) storage.write('game', game.serialize());
+}
+function requestReply() {
+  if (ready) void game.requestReply(pacedEngine);
+  else if (game.started && !game.over) void ensureReady();
 }
 async function ensureReady() {
-  sound.unlock();
-  if (loading) return;
+  if (ready || loading) return;
   const attempt = ++loadAttempt;
-  loading = true; loadError = null; $('loading-detail').textContent = 'Preparing the engine…'; $('progress-bar').style.width = '0%'; render();
-  try { await engine.load(); if (attempt !== loadAttempt) return; ready = true; }
-  catch (error) { if (attempt !== loadAttempt) return; loadError = error.message; ready = false; }
-  finally { if (attempt === loadAttempt) { loading = false; render(); if (ready) void game.requestReply(engine); } }
+  loading = true; loadError = null; loadProgress = 0; render();
+  try { await engine.load(); if (attempt === loadAttempt) ready = true; }
+  catch (error) { if (attempt === loadAttempt) loadError = error.message || 'The engine could not load.'; }
+  finally { if (attempt === loadAttempt) { loading = false; render(); if (ready) void game.requestReply(pacedEngine); } }
 }
 function makeMove(uci) {
-  try { game.play(uci); $('move-error').textContent = ''; $('move-input').value = ''; void game.requestReply(engine); }
-  catch { $('move-error').textContent = 'That move isn’t legal here. Try a move from the suggestions.'; render(); }
+  try { game.play(uci); } catch { render(); return; }
+  requestReply();
 }
 function onBoardMove(from, to) {
-  sound.unlock();
-  const options = game.chess.moves({ verbose: true }).filter(m => m.from === from && m.to === to);
-  if (options.some(m => m.promotion)) {
-    promotion = { from, to }; render();
-    const roles = { q: 'queen', r: 'rook', b: 'bishop', n: 'knight' };
-    options.sort((a, b) => ['q', 'r', 'b', 'n'].indexOf(a.promotion) - ['q', 'r', 'b', 'n'].indexOf(b.promotion));
-    $('promotion-options').innerHTML = options.map(m => `<button data-promotion="${m.promotion}" aria-label="Promote to ${roles[m.promotion]}"><piece class="promotion-piece ${roles[m.promotion]} ${colorName(game.human)}" aria-hidden="true"></piece><span>${roles[m.promotion]}</span></button>`).join('');
-    $('promotion-dialog').showModal();
-  } else makeMove(from + to);
+  const moves = game.chess.moves({ verbose: true }).filter(move => move.from === from);
+  const castle = moves.find(move => /[kq]/.test(move.flags) && to === (move.flags.includes('k') ? 'h' : 'a') + from[1]);
+  const options = castle ? [castle] : moves.filter(move => move.to === to);
+  if (!options.length) { render(); return; }
+  // Moving a white piece on the setup board starts a game as White.
+  if (!game.started) startGame('w');
+  if (options.some(move => move.promotion)) showPromotion(from, to); else makeMove(toUci(options[0]));
 }
-function closePromotion() { promotion = null; $('promotion-dialog').close(); render(); }
-function startGame() {
-  reviewPly = null; promotion = null; ground.cancelMove(); ground.setShapes([]);
-  const color = selectedSide === 'random' ? (crypto.getRandomValues(new Uint8Array(1))[0] & 1 ? 'w' : 'b') : selectedSide;
-  orientation = colorName(color); lastRenderedPly = 0; game.start(color);
-  if (ready) void game.requestReply(engine); else void ensureReady();
+function showPromotion(from, to) {
+  promotion = { from, to };
+  const file = to.charCodeAt(0) - 97; const x = orientation === 'white' ? file : 7 - file;
+  const fromTop = (to[1] === '8') === (orientation === 'white');
+  $('promotion').innerHTML = [['q', 'queen'], ['n', 'knight'], ['r', 'rook'], ['b', 'bishop']].map(([code, role], i) =>
+    `<button type="button" data-promote="${code}" style="left:${x * 12.5}%;top:${(fromTop ? i : 7 - i) * 12.5}%" aria-label="Promote to ${role}">${piece(role, colorName(game.human))}</button>`).join('');
+  $('promotion').hidden = false;
+  draw();
+  $('promotion').querySelector('button').focus();
 }
-function confirm(title, detail, action) {
-  $('confirm-title').textContent = title; $('confirm-detail').textContent = detail; confirmAction = action; $('confirm-dialog').showModal();
+function cancelPromotion(redraw = true) {
+  if (!promotion) return;
+  promotion = null; $('promotion').hidden = true;
+  if (redraw) render();
+}
+function startGame(side) {
+  const color = side === 'random' ? (crypto.getRandomValues(new Uint8Array(1))[0] & 1 ? 'w' : 'b') : side;
+  reviewPly = null; confirming = null; cancelPromotion(false); ground.cancelMove(); ground.setShapes([]);
+  orientation = colorName(color); lastRenderedPly = 0;
+  game.start(color);
+  requestReply();
 }
 function openSetup() {
-  game.revision++; game.replyOwner = null; game.started = false; game.thinking = false; game.error = null;
-  game.chess = new Chess(); game.resigned = false; reviewPly = null; lastRenderedPly = 0; storage.write('game', null); ground.cancelMove(); render();
+  reviewPly = null; confirming = null; cancelPromotion(false); ground.cancelMove(); ground.setShapes([]);
+  lastRenderedPly = 0; storage.write('game', null);
+  if (selectedSide !== 'random') orientation = colorName(selectedSide);
+  game.reset();
 }
-function goTo(ply) { const count = history().length; reviewPly = ply >= count ? null : Math.max(0, ply); ground.cancelMove(); render(); }
-for (const button of document.querySelectorAll('[data-side]')) button.onclick = () => {
-  selectedSide = button.dataset.side;
-  for (const choice of document.querySelectorAll('[data-side]')) { choice.classList.toggle('selected', choice === button); choice.setAttribute('aria-pressed', String(choice === button)); }
-  if (selectedSide !== 'random') { game.human = selectedSide; orientation = colorName(selectedSide); render(); }
+function goTo(ply) {
+  const moves = history(); const from = currentPly(); const target = Math.max(0, Math.min(ply, moves.length));
+  if (target === from) return;
+  cancelPromotion(false); ground.cancelMove();
+  reviewPly = target === moves.length ? null : target;
+  if (target === from + 1) void sound.play(moves[target - 1].captured ? 'capture' : 'move');
+  render();
+}
+function downloadPgn() {
+  const url = URL.createObjectURL(new Blob([game.pgn(config.name)], { type: 'application/x-chess-pgn' }));
+  const link = document.createElement('a');
+  link.href = url; link.download = `${config.name.toLowerCase()}-${new Date().toISOString().slice(0, 10)}.pgn`; link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+// Accepts coordinates (e2e4, e7e8q) or SAN (e4, Nf3, O-O), matched against the legal moves.
+function parseMove(text) {
+  const legal = game.chess.moves({ verbose: true });
+  const clean = san => san.replace(/[x+#!?=\s]/g, '').replace(/0/g, 'O').replace(/-/g, '');
+  const input = clean(text.trim());
+  const uci = legal.find(move => toUci(move) === input.toLowerCase());
+  if (uci) return toUci(uci);
+  const exact = legal.find(move => clean(move.san) === input);
+  if (exact) return toUci(exact);
+  const loose = legal.filter(move => clean(move.san).toLowerCase() === input.toLowerCase());
+  return loose.length === 1 ? toUci(loose[0]) : null;
+}
+
+const actions = {
+  start: () => startGame(selectedSide),
+  first: () => goTo(0), back: () => goTo(currentPly() - 1), next: () => goTo(currentPly() + 1), last: () => goTo(history().length),
+  flip: () => { cancelPromotion(false); orientation = orientation === 'white' ? 'black' : 'white'; render(); },
+  sound: () => { sound.enabled = !sound.enabled; storage.write('sound', sound.enabled); sound.unlock(); render(); },
+  pgn: downloadPgn,
+  undo: () => { reviewPly = null; confirming = null; cancelPromotion(false); ground.cancelMove(); game.undo(); requestReply(); },
+  resign: () => { confirming = 'resign'; render(); },
+  new: () => {
+    if (game.over || !history().some(move => move.color === game.human)) openSetup();
+    else { confirming = 'new'; render(); }
+  },
+  cancel: () => { confirming = null; render(); },
+  confirm: () => { const action = confirming; confirming = null; if (action === 'resign') game.resign(); else openSetup(); },
+  retry: () => { if (loadError) void ensureReady(); else requestReply(); },
+  resume: requestReply,
 };
-$('start').onclick = startGame;
-$('retry').onclick = () => { if (loadError) void ensureReady(); else { game.error = null; void game.requestReply(engine); } };
-$('new-game').onclick = () => { if (!game.over && history().length) confirm('Start fresh?', 'This replaces the game saved in your browser. You can download its PGN first.', openSetup); else openSetup(); };
-$('confirm-cancel').onclick = () => $('confirm-dialog').close();
-$('confirm-yes').onclick = () => { $('confirm-dialog').close(); const action = confirmAction; confirmAction = null; action?.(); };
-$('undo').onclick = () => { reviewPly = null; ground.cancelMove(); game.undo(); if (ready) void game.requestReply(engine); };
-$('resign').onclick = () => confirm('Resign this game?', 'You can review the moves afterward or start another game.', () => game.resign());
-$('flip').onclick = () => { orientation = orientation === 'white' ? 'black' : 'white'; render(); };
-$('sound').onclick = () => { sound.enabled = !sound.enabled; storage.write('sound', sound.enabled); sound.unlock(); render(); };
-$('move-form').onsubmit = event => { event.preventDefault(); sound.unlock(); makeMove($('move-input').value.trim().toLowerCase()); };
-$('move-list').onclick = event => { const button = event.target.closest('[data-ply]'); if (button) goTo(Number(button.dataset.ply)); };
-$('history-first').onclick = () => goTo(0); $('history-back').onclick = () => goTo((reviewPly ?? history().length) - 1);
-$('history-next').onclick = () => goTo((reviewPly ?? history().length) + 1); $('history-last').onclick = () => goTo(history().length);
-$('return-live').onclick = () => goTo(history().length);
-$('promotion-options').onclick = event => { const button = event.target.closest('[data-promotion]'); if (button && promotion) { const { from, to } = promotion; closePromotion(); makeMove(from + to + button.dataset.promotion); } };
-$('cancel-promotion').onclick = closePromotion;
-$('promotion-dialog').addEventListener('cancel', event => { event.preventDefault(); closePromotion(); });
-$('download-pgn').onclick = () => { const url = URL.createObjectURL(new Blob([game.pgn(config.name)], { type: 'application/x-chess-pgn' })); const a = document.createElement('a'); a.href = url; a.download = 'blujay-' + new Date().toISOString().slice(0, 10) + '.pgn'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); };
-$('about').onclick = () => $('about-dialog').showModal(); $('close-about').onclick = () => $('about-dialog').close();
-document.addEventListener('keydown', event => {
-  if (/INPUT|TEXTAREA|SELECT/.test(event.target.tagName) || event.ctrlKey || event.metaKey || event.altKey || document.querySelector('dialog[open]')) return;
-  if (event.key === 'ArrowLeft') { event.preventDefault(); goTo((reviewPly ?? history().length) - 1); }
-  if (event.key === 'ArrowRight') { event.preventDefault(); goTo((reviewPly ?? history().length) + 1); }
-  if (event.key.toLowerCase() === 'f') $('flip').click();
+for (const type of ['pointerdown', 'keydown']) addEventListener(type, () => sound.unlock(), { capture: true, passive: true });
+document.addEventListener('click', event => {
+  const target = event.target.closest('[data-action], [data-side], [data-ply]');
+  if (!target || target.disabled) return;
+  if (target.dataset.side) {
+    selectedSide = target.dataset.side; storage.write('side', selectedSide);
+    if (selectedSide !== 'random') orientation = colorName(selectedSide);
+    render();
+  } else if (target.dataset.ply) goTo(Number(target.dataset.ply));
+  else actions[target.dataset.action]?.();
 });
-const saved = storage.read('game');
-if (saved) { try { game.restore(saved); orientation = colorName(game.human); selectedSide = game.human; lastRenderedPly = history().length; } catch { storage.write('game', null); } }
-render();
+$('promotion').addEventListener('click', event => {
+  const choice = event.target.closest('[data-promote]'); const pending = promotion;
+  cancelPromotion(false);
+  if (choice && pending) makeMove(pending.from + pending.to + choice.dataset.promote); else render();
+});
+// The move list switches between a column and a strip; keep the current move in view.
+addEventListener('resize', () => { lastShownPly = -1; render(); });
+// Clicking the board while reviewing returns to the game, like most chess sites.
+$('board-wrap').addEventListener('pointerdown', event => { if (reviewPly !== null && event.button === 0) goTo(history().length); }, true);
+// Stays enabled while the engine replies, so keyboard focus is never dropped mid-game.
+$('move-form').addEventListener('submit', event => {
+  event.preventDefault();
+  const input = $('move-input');
+  if (reviewPly !== null || promotion || !game.humanTurn || game.thinking) { $('announcer').textContent = game.over ? 'The game is over.' : 'Wait for your turn.'; return; }
+  const uci = parseMove(input.value);
+  if (!uci) { input.setAttribute('aria-invalid', 'true'); $('announcer').textContent = 'That move is not legal here.'; return; }
+  input.removeAttribute('aria-invalid'); input.value = '';
+  makeMove(uci);
+});
+$('move-input').addEventListener('input', event => event.target.removeAttribute('aria-invalid'));
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape') { if (promotion) cancelPromotion(); else if (confirming) actions.cancel(); return; }
+  if (/INPUT|TEXTAREA|SELECT/.test(event.target.tagName) || event.ctrlKey || event.metaKey || event.altKey) return;
+  const action = { ArrowLeft: 'back', ArrowRight: 'next', ArrowUp: 'first', ArrowDown: 'last', Home: 'first', End: 'last', f: 'flip' }[event.key];
+  if (!action || (!game.started && action !== 'flip')) return;
+  event.preventDefault(); actions[action]();
+});
+
+draw();

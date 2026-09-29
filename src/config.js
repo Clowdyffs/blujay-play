@@ -1,7 +1,7 @@
 // Branding and engine wiring live here; the board/controller only speak FEN + UCI.
 export const config = Object.freeze({
   name: 'Blujay',
-  subtitle: 'A homemade chess model',
+  tagline: 'A neural network that plays chess, running entirely in your browser.',
   author: 'Alex Ashworth',
   portfolioUrl: 'https://clowdydev.com',
   sourceUrl: 'https://github.com/Clowdyffs/blujay-play',

@@ -47,11 +47,11 @@ Or embed it once that URL is live:
   src="https://blujay.clowdydev.com"
   title="Play chess against Blujay"
   loading="lazy"
-  style="width:100%; height:1000px; border:0; border-radius:12px"
+  style="width:100%; height:760px; border:0; border-radius:12px"
 ></iframe>
 ```
 
-The demo permits framing by `https://clowdydev.com` and `https://www.clowdydev.com`. If the portfolio sets its own `frame-src` CSP, allow the demo’s origin there too. A direct link gives the board more room on a phone. Storage may be partitioned when embedded, so a game saved in the iframe might not appear when opening the subdomain directly. There is no cross-site tracking or shared account state.
+The layout sizes itself to whatever box it is given, so any height works; wide frames place the move panel beside the board, narrow ones stack it below. The demo permits framing by `https://clowdydev.com` and `https://www.clowdydev.com`. If the portfolio sets its own `frame-src` CSP, allow the demo’s origin there too. A direct link gives the board more room on a phone. Storage may be partitioned when embedded, so a game saved in the iframe might not appear when opening the subdomain directly. There is no cross-site tracking or shared account state.
 
 Neither the portfolio repository nor DNS is changed by the setup in this repository.
 
