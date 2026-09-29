@@ -1,0 +1,98 @@
+{
+  "format": "blujay-onnx-artifact",
+  "format_version": 1,
+  "name": "epoch_000015-fp32",
+  "created_at": "2026-09-29T16:43:11.611057+00:00",
+  "source_checkpoint": {
+    "file": "epoch_000015.pt",
+    "sha256": "7e0beaf2b993610f172e9fac96769985eb7275dcadf6abdd568a2bffe55f6a69",
+    "bytes": 15872687
+  },
+  "model_config": {
+    "vocab_size": 1968,
+    "d_model": 192,
+    "n_heads": 8,
+    "n_layers": 6,
+    "n_bins": 128,
+    "max_seq_len": 79,
+    "dropout": 0.0,
+    "prediction_type": "action_value",
+    "architecture_version": 3,
+    "encoding": "searchless-fen77-move1-v2",
+    "shared_board_layers": 4
+  },
+  "parameters": 3961664,
+  "encoding": {
+    "name": "searchless-fen77-move1-v2",
+    "actions": 1968,
+    "action_mapping_sha256": "0c85cec259a31318539a7171623ab73b01e25cd6d71fd43475e54d6e14f02e09"
+  },
+  "contract": {
+    "inputs": [
+      {
+        "name": "board_tokens",
+        "dtype": "int64",
+        "shape": [
+          78
+        ]
+      },
+      {
+        "name": "move_tokens",
+        "dtype": "int64",
+        "shape": [
+          "moves"
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "logits",
+        "dtype": "float32",
+        "shape": [
+          "moves",
+          "n_bins"
+        ]
+      },
+      {
+        "name": "action_values",
+        "dtype": "float32",
+        "shape": [
+          "moves"
+        ]
+      }
+    ],
+    "board_tokens": "start token plus 77 reference FEN tokens of the side-to-move position",
+    "move_tokens": "one reference action index per scored move, in python-chess legal-move order",
+    "action_values": "expected win percentage (0-100) for the side to move from the value-bin softmax; not centipawns",
+    "selection": "first maximum in legal-move order; positions without legal moves are handled outside the model"
+  },
+  "precision": "float32",
+  "onnx": {
+    "opset": 20,
+    "ir_version": 10,
+    "producer": "pytorch 2.14.0+cpu"
+  },
+  "exporter": {
+    "python": "3.14.7",
+    "torch": "2.14.0+cpu",
+    "onnx": "1.23.1",
+    "onnxscript": "0.7.2",
+    "onnxruntime": "1.30.0",
+    "python_chess": "1.11.2",
+    "platform": "Linux-7.2.7-arch1-1-x86_64-with-glibc2.44"
+  },
+  "files": {
+    "model.onnx": {
+      "bytes": 16251319,
+      "sha256": "7a937a0f7cf2e0e762abaf82a1dbb983bee8f3ada2a6bf704f97844f2cbeb536"
+    },
+    "encoding.json": {
+      "bytes": 23945,
+      "sha256": "c2695293151a2be3e72cc8ec0809e0b7d08492848eb0bcdb21d0129a55f34c00"
+    }
+  },
+  "verification": {
+    "logits_atol": 0.001,
+    "action_value_atol": 0.005
+  }
+}
