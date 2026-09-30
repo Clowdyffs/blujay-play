@@ -25,7 +25,6 @@ const tool = (action, name, label) => `<button type="button" class="tool" data-a
 
 document.querySelector('#app').innerHTML = `
   <header class="topbar">
-    <a class="brand" href="./">${bird}<span>${escapeHtml(config.name.toLowerCase())}</span></a>
     <nav class="links" aria-label="Links">
       <a href="${config.lichessUrl}" target="_blank" rel="noreferrer" title="Play ${escapeHtml(config.name)} on Lichess">Lichess${icon('external')}</a>
       <a href="${sourceUrl}" target="_blank" rel="noreferrer" title="Source code (GPL-3.0)">Source${icon('external')}</a>

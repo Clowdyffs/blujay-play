@@ -31,12 +31,12 @@
   --square-ink: #3c2c4d;
 
   --vh: 100vh;
-  --topbar: 88px;
+  --topbar: 56px;
   --pad: 32px;
   --gap: 32px;
   --row: 48px;
   --side: 320px;
-  --board: max(256px, min(720px, calc(var(--vh) - var(--topbar) - var(--pad) - 2 * var(--row)), calc(100cqw - 2 * var(--pad) - var(--gap) - var(--side))));
+  --board: max(256px, min(768px, calc(var(--vh) - var(--topbar) - var(--pad) - 2 * var(--row)), calc(100cqw - 2 * var(--pad) - var(--gap) - var(--side))));
 
   background: var(--bg);
   color: var(--text);
@@ -66,10 +66,8 @@ button:disabled { cursor: default; }
 /* Top bar */
 .topbar {
   flex: none; height: var(--topbar); width: 100%; max-width: calc(var(--board) + var(--gap) + var(--side) + 2 * var(--pad));
-  margin: 0 auto; padding: 0 var(--pad); display: flex; align-items: center; justify-content: space-between;
+  margin: 0 auto; padding: 0 var(--pad); display: flex; align-items: center; justify-content: flex-end;
 }
-.brand { display: flex; align-items: center; gap: 9px; font-size: 18px; font-weight: 600; letter-spacing: -0.015em; }
-.brand .bird { width: 28px; height: 28px; }
 .links { display: flex; gap: 24px; font-size: 14px; color: var(--muted); }
 .links a { display: flex; align-items: center; gap: 4px; transition: color .15s; }
 .links a:hover { color: var(--text); }
@@ -81,7 +79,7 @@ button:disabled { cursor: default; }
 .board-wrap { position: relative; width: var(--board); height: var(--board); }
 #board { width: 100%; height: 100%; }
 .side {
-  flex: none; width: var(--side); height: calc(var(--board) + 2 * var(--row)); display: flex; flex-direction: column;
+  flex: none; width: var(--side); height: var(--board); margin-top: var(--row); display: flex; flex-direction: column;
   background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
 }
 
@@ -92,7 +90,7 @@ button:disabled { cursor: default; }
   background: var(--surface-2); border: 1px solid var(--border); color: var(--muted);
 }
 .avatar .icon { width: 17px; height: 17px; }
-.avatar.bot { background: var(--surface); }
+.avatar.bot { background: var(--brand-soft); }
 .avatar .bird { width: 21px; height: 21px; }
 .name { display: flex; align-items: center; gap: 7px; font-weight: 600; white-space: nowrap; }
 .tag { font-size: 10px; font-weight: 600; letter-spacing: .06em; line-height: 1; padding: 4px 5px 3px; border-radius: 4px; color: var(--brand); background: var(--brand-soft); }
@@ -216,15 +214,22 @@ cg-board piece.dragging { cursor: grabbing; }
 .credits { flex: none; display: flex; justify-content: space-between; gap: 12px; padding: 9px 14px; border-top: 1px solid var(--border); font-size: 11px; color: var(--faint); }
 .credits a:hover { color: var(--muted); }
 
+/* Keep the setup controls and license link inside short or narrow side panels. */
+@media (max-height: 660px), (max-width: 900px) {
+  :root { --topbar: 40px; --row: 36px; --pad: 20px; }
+  .setup { padding: 20px; gap: 12px; }
+  .bot-card { display: none; }
+}
+
 /* Stacked layout for phones and portrait tablets. */
 @media (max-width: 719px), (max-aspect-ratio: 1/1) {
   :root {
-    --topbar: 64px; --row: 44px; --edge: 20px; --panel: 176px;
-    --board: min(720px, calc(100cqw - 2 * var(--edge)), max(256px, calc(var(--vh) - var(--topbar) - 2 * var(--row) - var(--panel) - var(--edge))));
+    --topbar: 48px; --row: 44px; --edge: 20px; --panel: 176px;
+    --board: min(768px, calc(100cqw - 2 * var(--edge)), max(256px, calc(var(--vh) - var(--topbar) - 2 * var(--row) - var(--panel) - var(--edge))));
   }
   .topbar { max-width: calc(var(--board) + 2 * var(--edge)); padding: 0 var(--edge); }
   .stage { flex-direction: column; align-items: center; gap: 0; padding: 0 var(--edge) var(--edge); }
-  .side { width: var(--board); height: auto; min-height: var(--panel); flex: 1 0 auto; }
+  .side { width: var(--board); height: auto; min-height: var(--panel); margin-top: 0; flex: 1 0 auto; }
   .setup { padding: 14px; gap: 10px; }
   .bot-card { display: grid; grid-template-columns: auto 1fr; column-gap: 12px; align-items: center; margin: 0 0 6px; text-align: left; }
   .bot-card .avatar { grid-row: span 2; width: 44px; height: 44px; border-radius: 11px; margin: 0; }
@@ -249,8 +254,12 @@ cg-board piece.dragging { cursor: grabbing; }
   .controls .button .icon { display: none; }
 }
 @media ((max-width: 719px) or (max-aspect-ratio: 1/1)) and (max-height: 720px) {
-  :root { --topbar: 52px; --row: 36px; --panel: 176px; }
+  :root { --topbar: 40px; --row: 36px; --panel: 176px; }
   .bot-card, .setup-label { display: none; }
+}
+/* Reserve room for the full setup card when it is visible below the board. */
+@media ((max-width: 719px) or (max-aspect-ratio: 1/1)) and (min-height: 721px) {
+  :root:has(#setup:not([hidden])) { --panel: 300px; }
 }
 @media (max-width: 380px) {
   .links .icon { display: none; }

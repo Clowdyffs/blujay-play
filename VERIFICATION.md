@@ -2,6 +2,18 @@
 
 Records of what was checked, newest first, and the limits of each check.
 
+## Icon contrast and board alignment — 2026-09-30
+
+Bot avatars now use the favicon's lavender background (`#e0d8fd`) so the white belly remains visible. Removed the redundant lowercase header brand while retaining Lichess, the GPL source link, and Portfolio. Shortened the navigation strip, raised the board size cap to 768 px, and aligned the desktop side panel with the actual board square rather than the player rows.
+
+At 1280×800, the board moved from y=136 to y=104 and grew from 584 to 616 px. The board and side panel both span y=104–720. Compact views retain the controls and credits without clipping; stacked setup views reserve room for the full introductory card.
+
+`npm run check` passed the game tests and production build. Subsequent CSS refinements passed `npm run build`, including model/encoding hash verification and static-only asset checks (27 files). Changes are limited to page markup and CSS; engine, runtime, and model assets are unchanged.
+
+T3 Code's Chromium browser exercised the production build served by local Wrangler with the real CSP. Board clicks played `e2e4`; the real WASM model replied `c7c5` without an error. Setup and game views were checked across 1920×1080, 1280×800, 1024×768, 1024×600, 844×390, 820×1180, 720×800, 720×600, 390×844, 320×721, and 320×568. All final checked views fit without horizontal or vertical overflow, clipped controls, or hidden credits. Desktop board and panel edges aligned; stacked views kept the panel beneath the board. Visible bot avatars had the same lavender background as the favicon.
+
+These are resized Chromium viewports, not physical phone, Safari, or Firefox tests. The full inference-reference suite was not repeated for this layout change.
+
 ## Selected minimal blue jay icon — 2026-09-30
 
 Replaced the earlier drawing with a flat SVG refinement of the selected OpenAI Image Gen concept, option 3: one swept blue crest, a dark wing, and a pale belly. The interface and generated favicon share the same three-path drawing. The favicon URL includes a new version query so browsers fetch the replacement.
