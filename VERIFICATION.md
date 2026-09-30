@@ -2,6 +2,16 @@
 
 Records of what was checked, newest first, and the limits of each check.
 
+## Selected minimal blue jay icon — 2026-09-30
+
+Replaced the earlier drawing with a flat SVG refinement of the selected OpenAI Image Gen concept, option 3: one swept blue crest, a dark wing, and a pale belly. The interface and generated favicon share the same three-path drawing. The favicon URL includes a new version query so browsers fetch the replacement.
+
+`npm run build` passed model/encoding hash verification, the production build, and static-only asset checks (27 files). No dependencies, game/controller code, inference code, runtime files, or model artifacts changed.
+
+T3 Code's Chromium browser compared the SVG with the selected concept and inspected the favicon at 16, 32, 64, and 128 px. The production build was served by local Wrangler with its actual CSP. Board clicks played `e2e4`, and the real WASM model replied `c7c5`. The new drawing rendered in the header and bot identity. Layouts at 1280×800, 390×844, and 320×568 fit without horizontal or vertical overflow; Source and Credits & licenses remained visible.
+
+These are resized Chromium viewports, not physical phone, Safari, or Firefox tests. The full inference-reference suite was not repeated for this asset-only change.
+
 ## Portfolio visual alignment — 2026-09-30
 
 Matched the live clowdy.dev palette and Instrument Sans typeface: lavender background, plum text, violet controls, softer borders, and muted lavender board squares. The font is self-hosted with its SIL Open Font License. The interface and favicon share one original blue jay drawing. Desktop board size is capped at 720 px, and phones retain outer gutters.
