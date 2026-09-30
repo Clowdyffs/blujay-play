@@ -18,6 +18,8 @@ for (const [name, file] of [['chessground', '@lichess-org/chessground/LICENSE'],
 }
 await copyFile('LICENSE', 'public/licenses/app-GPL-3.0.txt');
 await copyFile('THIRD_PARTY_NOTICES.md', 'public/licenses/THIRD_PARTY_NOTICES.md');
+const bluejay = (await readFile('src/bluejay.svg', 'utf8')).replace('<svg ', '<svg x="3" y="3" width="34" height="34" ');
+await writeFile('public/favicon.svg', `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#e0d8fd"/>${bluejay}</svg>\n`);
 console.log('Verified model and prepared same-origin WASM assets.');
 
-for (const name of ['onnxruntime-LICENSE.txt', 'onnxruntime-ThirdPartyNotices.txt', 'CC-BY-4.0.txt']) await copyFile('licenses/' + name, 'public/licenses/' + name);
+for (const name of ['onnxruntime-LICENSE.txt', 'onnxruntime-ThirdPartyNotices.txt', 'CC-BY-4.0.txt', 'instrument-sans-OFL.txt']) await copyFile('licenses/' + name, 'public/licenses/' + name);

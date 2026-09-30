@@ -3,7 +3,7 @@ export const config = Object.freeze({
   name: 'Blujay',
   tagline: 'A neural network that plays chess, running entirely in your browser.',
   author: 'Alex Ashworth',
-  portfolioUrl: 'https://clowdydev.com',
+  portfolioUrl: 'https://clowdy.dev',
   sourceUrl: 'https://github.com/Clowdyffs/blujay-play',
   lichessUrl: 'https://lichess.org/@/Blujay-bot',
   engine: {

@@ -32,26 +32,26 @@ The `_headers` file supplies a restrictive same-origin content security policy, 
 
 ## Portfolio integration
 
-A dedicated subdomain such as **blujay.clowdydev.com** keeps deployment independent of the portfolio. After verifying the default URL, add the chosen custom domain in the Worker’s **Settings → Domains & Routes**. Cloudflare manages the domain route and certificate. This step must be performed in the account that manages the domain.
+A dedicated subdomain such as **blujay.clowdy.dev** keeps deployment independent of the portfolio. After verifying the default URL, add the chosen custom domain in the Worker’s **Settings → Domains & Routes**. Cloudflare manages the domain route and certificate. This step must be performed in the account that manages the domain.
 
 The portfolio can link to it:
 
 ```html
-<a href="https://blujay.clowdydev.com">Play Blujay</a>
+<a href="https://blujay.clowdy.dev">Play Blujay</a>
 ```
 
 Or embed it once that URL is live:
 
 ```html
 <iframe
-  src="https://blujay.clowdydev.com"
+  src="https://blujay.clowdy.dev"
   title="Play chess against Blujay"
   loading="lazy"
   style="width:100%; height:760px; border:0; border-radius:12px"
 ></iframe>
 ```
 
-The layout sizes itself to whatever box it is given, so any height works; wide frames place the move panel beside the board, narrow ones stack it below. The demo permits framing by `https://clowdydev.com` and `https://www.clowdydev.com`. If the portfolio sets its own `frame-src` CSP, allow the demo’s origin there too. A direct link gives the board more room on a phone. Storage may be partitioned when embedded, so a game saved in the iframe might not appear when opening the subdomain directly. There is no cross-site tracking or shared account state.
+The layout sizes itself to whatever box it is given, so any height works; wide frames place the move panel beside the board, narrow ones stack it below. The demo permits framing by `https://clowdy.dev` and `https://www.clowdy.dev`, with the earlier `clowdydev.com` origins retained for compatibility. If the portfolio sets its own `frame-src` CSP, allow the demo’s origin there too. A direct link gives the board more room on a phone. Storage may be partitioned when embedded, so a game saved in the iframe might not appear when opening the subdomain directly. There is no cross-site tracking or shared account state.
 
 Neither the portfolio repository nor DNS is changed by the setup in this repository.
 

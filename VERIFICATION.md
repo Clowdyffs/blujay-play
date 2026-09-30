@@ -2,6 +2,21 @@
 
 Records of what was checked, newest first, and the limits of each check.
 
+## Portfolio visual alignment — 2026-09-30
+
+Matched the live clowdy.dev palette and Instrument Sans typeface: lavender background, plum text, violet controls, softer borders, and muted lavender board squares. The font is self-hosted with its SIL Open Font License. The interface and favicon share one original blue jay drawing. Desktop board size is capped at 720 px, and phones retain outer gutters.
+
+`npm run check` passed the game tests, model/encoding hash verification, production build, and static-only asset checks. The build contains 27 files, including the hashed font and its license notice.
+
+T3 Code’s Chromium browser exercised the production build served by local Wrangler with its actual CSP:
+
+- First visit loaded the page script, stylesheet, and local font, with no engine Worker or model download. Instrument Sans loaded successfully under `font-src 'self'`.
+- Board clicks played `e2e4`; the actual WASM model replied `c7c5`. Selecting Black and pressing Play produced `d2d4` and the Black board orientation.
+- Layouts at 1920×1080, 1280×800, 1024×768, 820×1180, 390×844, 375×667, and 320×568 were inspected. The ordinary setup/game layouts fit without horizontal overflow; the final compact phone layouts also fit vertically. All seven toolbar buttons remain inside the panel at its smallest 256 px width. Confirmation controls wrap on narrow phones and can require vertical scrolling.
+- The favicon was visually inspected at 16, 32, 64, and 128 px. The Portfolio link resolves to clowdy.dev; Source and Credits & licenses remain visible.
+
+These are resized Chromium viewports, not physical phone, Safari, or Firefox tests. The inference adapter, runtime, encoding, and model were not changed; the full export-reference parity suite was not repeated. No deployment was performed.
+
 ## Interface redesign — 2026-09-29
 
 The page, board theme, sounds, and controls were rebuilt; `src/engine/`, the model artifact, and the runtime were not changed, so the earlier inference parity result still applies and was not rerun.

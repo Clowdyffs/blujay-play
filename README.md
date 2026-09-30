@@ -1,6 +1,6 @@
 # Blujay Play
 
-Play chess against a neural network that runs entirely in your browser. A static demo for [Alex Ashworth’s portfolio](https://clowdydev.com), built on Chessground with on-device inference.
+Play chess against a neural network that runs entirely in your browser. A static demo for [Alex Ashworth’s portfolio](https://clowdy.dev), built on Chessground with on-device inference.
 
 Play White, Black, or a random side — or just move a white piece to start. Click or drag pieces (dropping the king on its rook castles), promote from an on-board picker, take back a turn, review the game with the move list or arrow keys, export PGN, and resume a saved game. Keyboard users can Tab to a move field that accepts SAN (`Nf3`, `O-O`) or coordinates (`e2e4`). Move and capture sounds are short recordings of wooden pieces and can be muted. The layout fits the viewport without scrolling, from phones to wide desktops. There is no clock or difficulty slider; the model scores every legal move and selects its highest-scoring move without tree search.
 

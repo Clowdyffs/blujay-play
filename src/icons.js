@@ -1,3 +1,5 @@
+import bluejay from './bluejay.svg?raw';
+
 const paths = {
   first: '<path d="m11 17-5-5 5-5m7 10-5-5 5-5"/>',
   back: '<path d="m15 18-6-6 6-6"/>',
@@ -15,5 +17,5 @@ const paths = {
   retry: '<path d="M3 12a9 9 0 0 1 15.5-6.2L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.5 6.2L3 16m0 5v-5h5"/>',
 };
 export const icon = name => `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] ?? ''}</svg>`;
-// Crested jay head, facing right.
-export const bird = `<svg class="bird" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M2.6 3.2c3 .6 5.6 1.8 7.6 3.2 1.4-.6 3.2-.7 4.8-.2 1.8.6 3 1.9 3.6 3.4l4.2 1.7-4.1 1.3c-.3 1.8-1.2 3.2-2.4 4.1l.9 4.1H7.4l.6-4.6c-1-1.5-1.3-3.4-.8-5.2L2.6 3.2Zm12.1 6a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2Z"/></svg>`;
+// One blue jay drawing for the interface and generated favicon.
+export const bird = bluejay.replace('<svg ', '<svg class="bird" aria-hidden="true" ');
