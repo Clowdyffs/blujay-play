@@ -2,6 +2,16 @@
 
 Records of what was checked, newest first, and the limits of each check.
 
+## Move-set 4M model — 2026-10-14
+
+Replaced the epoch-15 shared-board model with move-set v4 `best_model.pt` (epoch 10, averaged weights) from the training run `move-set-4m-full-corpus-24epochs-20261008T034439Z`. New path `models/blujay-97ad2ce3d540/`; model SHA-256 `97ad2ce3d54048d56529c62585e418db98bb19e19681db8c97029ca67fa6d4b6`, 4,073,600 parameters, 16,836,525 bytes. The tensor contract and `encoding.json` bytes are unchanged, so the adapter and runtime were not modified. The old model directory was removed rather than overwritten.
+
+In the training repository, the export's PyTorch/ONNX parity check agreed on all 79 fixture positions and 527 of 527 positions in a 512-position sample (max action-value error 3.9e-4). Its browser benchmark ran the artifact in Chromium 156 with ONNX Runtime Web 1.30.0 WASM: 0 token mismatches, 79/79 top moves, max action-value error 2.3e-4, about 14 ms per position warm. Before this change, that repository's evaluation scored the new checkpoint 58.8% over 684 paired-color games against the previous model, with no search.
+
+`npm run check` passed 14 tests, model/encoding hash verification and static-only asset checks (27 files). With the production build served by local Wrangler, Playwright's Chromium chose Black and pressed Play: the page downloaded only the new model path, the model played `e4`, and no console errors appeared.
+
+Only Chromium was exercised; layout and other browsers were not rechecked for this weight-only change.
+
 ## Icon contrast and board alignment — 2026-09-30
 
 Bot avatars now use the favicon's lavender background (`#e0d8fd`) so the white belly remains visible. Removed the redundant lowercase header brand while retaining Lichess, the GPL source link, and Portfolio. Shortened the navigation strip, raised the board size cap to 768 px, and aligned the desktop side panel with the actual board square rather than the player rows.

@@ -1,12 +1,12 @@
 {
   "format": "blujay-onnx-artifact",
   "format_version": 1,
-  "name": "epoch_000015-fp32",
-  "created_at": "2026-09-29T16:43:11.611057+00:00",
+  "name": "best_model-e10-ema-fp32",
+  "created_at": "2026-10-14T19:35:30.476518+00:00",
   "source_checkpoint": {
-    "file": "epoch_000015.pt",
-    "sha256": "7e0beaf2b993610f172e9fac96769985eb7275dcadf6abdd568a2bffe55f6a69",
-    "bytes": 15872687
+    "file": "best_model.pt",
+    "sha256": "2389aade36a7b8c061a83df7541f2a1f6da878507500ce99edd82ac638ff41e7",
+    "bytes": 66995047
   },
   "model_config": {
     "vocab_size": 1968,
@@ -17,11 +17,12 @@
     "max_seq_len": 79,
     "dropout": 0.0,
     "prediction_type": "action_value",
-    "architecture_version": 3,
+    "architecture_version": 4,
     "encoding": "searchless-fen77-move1-v2",
-    "shared_board_layers": 4
+    "board_symmetry": "canonical",
+    "ffn": "swiglu"
   },
-  "parameters": 3961664,
+  "parameters": 4073600,
   "encoding": {
     "name": "searchless-fen77-move1-v2",
     "actions": 1968,
@@ -79,12 +80,12 @@
     "onnxscript": "0.7.2",
     "onnxruntime": "1.30.0",
     "python_chess": "1.11.2",
-    "platform": "Linux-7.2.7-arch1-1-x86_64-with-glibc2.44"
+    "platform": "Linux-7.2.9-arch1-1-x86_64-with-glibc2.44"
   },
   "files": {
     "model.onnx": {
-      "bytes": 16251319,
-      "sha256": "7a937a0f7cf2e0e762abaf82a1dbb983bee8f3ada2a6bf704f97844f2cbeb536"
+      "bytes": 16836525,
+      "sha256": "97ad2ce3d54048d56529c62585e418db98bb19e19681db8c97029ca67fa6d4b6"
     },
     "encoding.json": {
       "bytes": 23945,

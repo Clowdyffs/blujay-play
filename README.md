@@ -4,7 +4,7 @@ Play chess against a neural network that runs entirely in your browser. A static
 
 Play White, Black, or a random side — or just move a white piece to start. Click or drag pieces (dropping the king on its rook castles), promote from an on-board picker, take back a turn, review the game with the move list or arrow keys, export PGN, and resume a saved game. Keyboard users can Tab to a move field that accepts SAN (`Nf3`, `O-O`) or coordinates (`e2e4`). Move and capture sounds are short recordings of wooden pieces and can be muted. The layout fits the viewport without scrolling, from phones to wide desktops. There is no clock or difficulty slider; the model scores every legal move and selects its highest-scoring move without tree search.
 
-**Everything runs in the visitor’s browser.** The deployment serves static files, including the approved epoch-15 ONNX model. No accounts, server inference, analytics, API keys, Durable Objects, or connection to the Lichess bot service are required. The Lichess link opens that separate bot’s profile.
+**Everything runs in the visitor’s browser.** The deployment serves static files, including the approved ONNX model. No accounts, server inference, analytics, API keys, Durable Objects, or connection to the Lichess bot service are required. The Lichess link opens that separate bot’s profile.
 
 ## Develop
 
@@ -57,13 +57,13 @@ The interface uses **UCI move notation**, not a native UCI subprocess. Another m
 
 ## Model and loading
 
-The included float32 model has 3,961,664 parameters, shared-board architecture version 3, and comes from epoch 15. Its manifest records the tensor contract, source-checkpoint identity, and file hashes. Model SHA-256:
+The included float32 model has 4,073,600 parameters, move-set architecture version 4, and comes from epoch 10 (averaged weights) of the 4M full-corpus run. It replaced the earlier epoch-15 shared-board model, which it outscored 58.8% over 684 paired-color games in the training repository's evaluation. Its manifest records the tensor contract, source-checkpoint identity, and file hashes. Model SHA-256:
 
 ```text
-7a937a0f7cf2e0e762abaf82a1dbb983bee8f3ada2a6bf704f97844f2cbeb536
+97ad2ce3d54048d56529c62585e418db98bb19e19681db8c97029ca67fa6d4b6
 ```
 
-The page does not download the model or WASM until a game needs it: **Play**, a first move on the board, or **Continue game** after a reload. The first game fetches a 16.25 MB model and a 14.24 MB WASM runtime plus small support files (uncompressed sizes). HTTP caching lets later visits reuse versioned assets, subject to the browser’s cache. There is no offline service worker and no promise that an evicted cache stays available offline.
+The page does not download the model or WASM until a game needs it: **Play**, a first move on the board, or **Continue game** after a reload. The first game fetches a 16.84 MB model and a 14.24 MB WASM runtime plus small support files (uncompressed sizes). HTTP caching lets later visits reuse versioned assets, subject to the browser’s cache. There is no offline service worker and no promise that an evicted cache stays available offline.
 
 One WASM thread runs in a dedicated Web Worker; no WebGPU or cross-origin isolation is needed. Scores are evaluated in batches of at most 32 legal moves to bound temporary memory. The session is reused between games. Results are from the side-to-move perspective and are not centipawns or a demonstrated Elo rating. Exact score ties select the first supplied legal move; chess.js ordering can differ from another chess library. A move typically takes tens of milliseconds to choose, so the interface shows each reply no sooner than 450 ms after requesting it; otherwise the engine’s move would land on top of the player’s own. This is presentation only and does not change which move is chosen.
 
