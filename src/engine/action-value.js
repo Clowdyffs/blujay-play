@@ -30,7 +30,7 @@ export async function loadActionValue(config, progress) {
   const manifest = await response.json();
   if (manifest.format !== 'blujay-onnx-artifact' || manifest.format_version !== 1 || manifest.precision !== 'float32'
       || manifest.files?.['model.onnx']?.sha256 !== config.modelSha256
-      || manifest.contract?.inputs?.map(x => x.name).join(',') !== 'board_tokens,move_tokens'
+      || !['board_tokens,move_tokens', 'board_tokens,move_tokens,repetition_levels'].includes(manifest.contract?.inputs?.map(x => x.name).join(','))
       || manifest.contract?.outputs?.map(x => x.name).join(',') !== 'logits,action_values') throw new Error('Unsupported or unexpected model artifact.');
   const encoding = JSON.parse(new TextDecoder().decode(await verified(new URL('encoding.json', base), manifest.files['encoding.json'])));
   if (encoding.name !== manifest.encoding.name || encoding.actions.length !== manifest.encoding.actions) throw new Error('Model encoding does not match.');
@@ -46,8 +46,13 @@ export async function loadActionValue(config, progress) {
     mjs: new URL('ort-wasm-simd-threaded.mjs', config.runtimeUrl).href,
   };
   const session = await ort.InferenceSession.create(bytes, { executionProviders: ['wasm'], graphOptimizationLevel: 'all' });
+  // Repetition-aware models take one level per move (src/repetition.js) as a third input.
+  const repetition = manifest.contract.inputs.some(x => x.name === 'repetition_levels');
   return {
-    async evaluate(fen, moves) {
+    async evaluate(fen, moves, levels) {
+      if (repetition && (!Array.isArray(levels) || levels.length !== moves.length || levels.some(x => ![0, 1, 2].includes(x)))) {
+        throw new Error('This model needs the game’s repetition levels.');
+      }
       const board = encodeBoard(fen, encoding.characters);
       const values = [];
       // Bound temporary memory even for unusual positions. Every legal move is scored.
@@ -61,6 +66,10 @@ export async function loadActionValue(config, progress) {
           board_tokens: new ort.Tensor('int64', board, [board.length]),
           move_tokens: new ort.Tensor('int64', BigInt64Array.from(batch), [batch.length]),
         };
+        if (repetition) {
+          const slice = levels.slice(offset, offset + 32);
+          feeds.repetition_levels = new ort.Tensor('int64', BigInt64Array.from(slice, BigInt), [slice.length]);
+        }
         let output;
         try {
           output = await session.run(feeds, ['action_values']);

@@ -1,4 +1,5 @@
 import { Chess, DEFAULT_POSITION } from 'chess.js';
+import { repetitionLevels } from './repetition.js';
 export const toUci = move => move.from + move.to + (move.promotion ?? '');
 export const colorName = color => color === 'w' ? 'white' : 'black';
 export function legalDests(chess) {
@@ -40,7 +41,9 @@ export class Game {
     this.thinking = true; this.error = null; this.onChange();
     try {
       const legal = this.chess.moves({ verbose: true }).map(toUci);
-      const result = await engine.choose(fen, legal);
+      // Models trained with repetition levels learn what repeating the game is worth.
+      const levels = repetitionLevels(this.initialFen, this.chess.history({ verbose: true }).map(toUci), legal);
+      const result = await engine.choose(fen, legal, levels);
       if (this.replyOwner !== owner || this.revision !== revision || this.chess.fen() !== fen) return;
       if (!legal.includes(result.move)) throw new Error('The engine returned an illegal move.');
       this.apply(result.move); this.lastTime = result.milliseconds;

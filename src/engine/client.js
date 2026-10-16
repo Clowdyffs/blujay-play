@@ -1,4 +1,4 @@
-// The rest of the app depends on load() and choose(fen, legalUciMoves), not ONNX.
+// The rest of the app depends on load() and choose(fen, legalUciMoves, repetitionLevels), not ONNX.
 export class EngineClient {
   constructor(config, onProgress = () => {}) {
     this.config = { ...config,
@@ -31,7 +31,7 @@ export class EngineClient {
     this.loaded ??= this.request('load', this.config).catch(error => { this.dispose(error); throw error; });
     return this.loaded;
   }
-  async choose(fen, moves) { await this.load(); return this.request('choose', { fen, moves }); }
+  async choose(fen, moves, levels) { await this.load(); return this.request('choose', { fen, moves, levels }); }
   dispose(error = new Error('Engine request canceled.')) {
     this.worker?.terminate(); this.worker = null; this.loaded = null;
     for (const pending of this.pending.values()) pending.reject(error);

@@ -12,7 +12,7 @@ self.onmessage = ({ data }) => {
       } else if (type === 'choose' || type === 'evaluate') {
         if (!engine) throw new Error('Load an engine before asking for a move.');
         const start = performance.now();
-        const result = await engine.evaluate(payload.fen, payload.moves);
+        const result = await engine.evaluate(payload.fen, payload.moves, payload.levels);
         self.postMessage({ id, type: 'result', result: { ...result, milliseconds: performance.now() - start } });
       } else throw new Error('Unknown engine request.');
     } catch (error) { self.postMessage({ id, type: 'error', message: error.message || 'The engine could not complete this request.' }); }
