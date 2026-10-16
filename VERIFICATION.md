@@ -2,6 +2,16 @@
 
 Records of what was checked, newest first, and the limits of each check.
 
+## Mate-distance fine-tune — 2026-10-16
+
+Replaced move-set v4 epoch 10 with a 12,000-update fine-tune of it trained with mate-distance labels (faster forced wins score higher; training repository issue #93). New path `models/blujay-4f369b226272/`; model SHA-256 `4f369b2262727c24b0aad9ea5c89cb7f06f4c3ddfa2f5ba9fc68a6cc780da54a`, source checkpoint SHA-256 `1054bfd2…d0a7`, 4,073,600 parameters, 16,836,525 bytes. The tensor contract and `encoding.json` bytes are unchanged, so the adapter and runtime were not modified. The old model directory was removed rather than overwritten.
+
+In the training repository, the export's PyTorch/ONNX parity check agreed on all 79 fixture positions and 527 of 527 sampled positions (max action-value error 2.0e-4). Its browser benchmark ran the artifact in Chromium 156 with ONNX Runtime Web 1.30.0 WASM: 0 token mismatches, 79/79 top moves, max action-value error 2.8e-4, about 14 ms per position warm. That repository's evaluation measured 541 of 989 held-out won positions converted against Stockfish 19 at 100k nodes (epoch 10: 75) and 55.2% over 684 paired-color games against epoch 10, with no search.
+
+`npm run check` passed the tests, model/encoding hash verification and static-only asset checks (27 files). With the production build served by `vite preview`, Playwright's Chromium chose Black and pressed Play: the page downloaded only the new model path, the model played `e4`, and no console errors appeared.
+
+Only Chromium was exercised; layout and other browsers were not rechecked for this weight-only change.
+
 ## Move-set 4M model — 2026-10-14
 
 Replaced the epoch-15 shared-board model with move-set v4 `best_model.pt` (epoch 10, averaged weights) from the training run `move-set-4m-full-corpus-24epochs-20261008T034439Z`. New path `models/blujay-97ad2ce3d540/`; model SHA-256 `97ad2ce3d54048d56529c62585e418db98bb19e19681db8c97029ca67fa6d4b6`, 4,073,600 parameters, 16,836,525 bytes. The tensor contract and `encoding.json` bytes are unchanged, so the adapter and runtime were not modified. The old model directory was removed rather than overwritten.

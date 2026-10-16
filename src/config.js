@@ -8,8 +8,8 @@ export const config = Object.freeze({
   lichessUrl: 'https://lichess.org/@/Blujay-bot',
   engine: {
     adapter: 'action-value-onnx-v1',
-    modelPath: 'models/blujay-97ad2ce3d540/',
-    modelSha256: '97ad2ce3d54048d56529c62585e418db98bb19e19681db8c97029ca67fa6d4b6',
+    modelPath: 'models/blujay-4f369b226272/',
+    modelSha256: '4f369b2262727c24b0aad9ea5c89cb7f06f4c3ddfa2f5ba9fc68a6cc780da54a',
     runtimePath: 'runtime/onnx-1.30.0/',
   },
 });

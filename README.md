@@ -57,10 +57,10 @@ The interface uses **UCI move notation**, not a native UCI subprocess. Another m
 
 ## Model and loading
 
-The included float32 model has 4,073,600 parameters, move-set architecture version 4, and comes from epoch 10 (averaged weights) of the 4M full-corpus run. It replaced the earlier epoch-15 shared-board model, which it outscored 58.8% over 684 paired-color games in the training repository's evaluation. Its manifest records the tensor contract, source-checkpoint identity, and file hashes. Model SHA-256:
+The included float32 model has 4,073,600 parameters, move-set architecture version 4, and starts from epoch 10 (averaged weights) of the 4M full-corpus run, fine-tuned for 12,000 updates with mate-distance labels so that faster wins score higher. In the training repository's evaluation it converted 541 of 989 won positions against Stockfish (the epoch-10 model: 75, mostly drawn by repetition) and scored 55.2% over 684 paired-color games against epoch 10. Its manifest records the tensor contract, source-checkpoint identity, and file hashes. Model SHA-256:
 
 ```text
-97ad2ce3d54048d56529c62585e418db98bb19e19681db8c97029ca67fa6d4b6
+4f369b2262727c24b0aad9ea5c89cb7f06f4c3ddfa2f5ba9fc68a6cc780da54a
 ```
 
 The page does not download the model or WASM until a game needs it: **Play**, a first move on the board, or **Continue game** after a reload. The first game fetches a 16.84 MB model and a 14.24 MB WASM runtime plus small support files (uncompressed sizes). HTTP caching lets later visits reuse versioned assets, subject to the browser’s cache. There is no offline service worker and no promise that an evicted cache stays available offline.
