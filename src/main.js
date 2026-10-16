@@ -94,9 +94,9 @@ const engine = new EngineClient(config.engine, progress => {
   if (bar) { bar.style.width = Math.round(loadProgress * 100) + '%'; } else render();
 });
 const pacedEngine = {
-  async choose(fen, moves) {
+  async choose(fen, moves, levels) {
     const started = performance.now();
-    const result = await engine.choose(fen, moves);
+    const result = await engine.choose(fen, moves, levels);
     const rest = MIN_REPLY_MS - (performance.now() - started);
     if (rest > 0) await new Promise(resolve => setTimeout(resolve, rest));
     return result;

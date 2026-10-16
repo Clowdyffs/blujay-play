@@ -85,3 +85,16 @@ test('first-maximum selection preserves tie order and rejects missing/nonfinite 
   assert.equal(selectBest(['a2a3','a2a4'],[50,50]),'a2a3');assert.equal(selectBest([],[]),null);
   assert.throws(()=>selectBest(['a2a3'],[]));assert.throws(()=>selectBest(['a2a3'],[NaN]));
 });
+test('the engine receives each legal move’s repetition level from the game history', async () => {
+  const g = new Game(); g.start('b');
+  const seen = [];
+  const replies = ['g1f3', 'f3g1', 'g1f3'];
+  const engine = { choose: async (fen, legal, levels) => { seen.push({ legal, levels }); return { move: replies.shift(), milliseconds: 1 }; } };
+  await g.requestReply(engine); g.play('g8f6'); await g.requestReply(engine); g.play('f6g8'); await g.requestReply(engine);
+  assert.deepEqual(seen[0].levels, seen[0].legal.map(() => 0));
+  // Third request: the start position for the second time; Nf3 repeats the position after 1.Nf3.
+  const last = seen[2];
+  assert.equal(last.levels.length, last.legal.length);
+  assert.equal(last.levels[last.legal.indexOf('g1f3')], 1);
+  assert.equal(last.levels[last.legal.indexOf('b1c3')], 0);
+});
