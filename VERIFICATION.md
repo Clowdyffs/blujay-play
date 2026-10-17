@@ -8,7 +8,7 @@ Replaced the mate-distance fine-tune with epoch 8 (averaged weights) of the trai
 
 In the training repository, PyTorch/ONNX parity agreed on 527 of 527 sampled positions (max action-value error 2.3e-4); its browser benchmark in Chromium 156 with ONNX Runtime Web 1.30.0 matched 79/79 top moves with 0 token mismatches and max error 4.0e-4, about 13 ms per position warm. Its play evaluation: 570 of 989 held-out won positions converted against Stockfish 19 at 100k nodes (previous model 541, the epoch-10 model 75) and 55.8% over 684 paired-color games against the previous model, with no search.
 
-`npm run check` passed 17 tests, hash verification and static-only asset checks (27 files). With the production build served by `vite preview`, Playwright's Chromium chose Black and pressed Play: the page downloaded only the new model path, the model played `e4`, and no console errors appeared.
+`npm run check` passed 17 tests, hash verification and static-only asset checks (27 files). With the production build served by `vite preview`, Playwright's Chromium chose Black and pressed Play: the page downloaded only the new model path, the model played `Nf3`, and no console errors appeared.
 
 Only Chromium was exercised; layout and other browsers were not rechecked for this weight-only change.
 
