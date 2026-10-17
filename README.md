@@ -57,10 +57,10 @@ The interface uses **UCI move notation**, not a native UCI subprocess. Another m
 
 ## Model and loading
 
-The included float32 model has 4,073,600 parameters, move-set architecture version 4, and is epoch 8 (averaged weights) of a 12-epoch 4M run on the full corpus trained with mate-distance labels, so faster wins score higher. In the training repository's evaluation it converted 570 of 989 won positions against Stockfish (the earlier epoch-10 model: 75, mostly drawn by repetition) and scored 55.8% over 684 paired-color games against the previous mate-distance fine-tune. Its manifest records the tensor contract, source-checkpoint identity, and file hashes. Model SHA-256:
+The included float32 model has 4,074,176 parameters, move-set architecture version 4, and is epoch 8 (averaged weights) of a 12-epoch 4M run on the full corpus trained with mate-distance labels, so faster wins score higher. It also reads each legal move's repetition level (whether the move repeats an earlier position of this game or lets a threefold draw be claimed), which `src/repetition.js` computes from the game's moves; those weights were trained with the rest of the model frozen, so moves without a repetition score exactly as in the model it replaced. In the training repository's evaluation it converted 739 of 989 won positions against Stockfish (the earlier epoch-10 model: 75, mostly drawn by repetition) and scored 55.0% over 684 paired-color games against the same model without the repetition input. Its manifest records the tensor contract, source-checkpoint identity, and file hashes. Model SHA-256:
 
 ```text
-8cdc384e14db7da19f35c165c92ad8d34c55974882abcf811d9e77fa3dff2169
+477e2901ed1b2b01295e981514bbbc9f2924be2e4725918a037a0abe5c9160aa
 ```
 
 The page does not download the model or WASM until a game needs it: **Play**, a first move on the board, or **Continue game** after a reload. The first game fetches a 16.84 MB model and a 14.24 MB WASM runtime plus small support files (uncompressed sizes). HTTP caching lets later visits reuse versioned assets, subject to the browser’s cache. There is no offline service worker and no promise that an evicted cache stays available offline.

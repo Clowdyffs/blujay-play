@@ -1,12 +1,12 @@
 {
   "format": "blujay-onnx-artifact",
   "format_version": 1,
-  "name": "best_model-e8-ema-fp32",
-  "created_at": "2026-10-17T03:21:10.759871+00:00",
+  "name": "repetition-only-e8-fp32",
+  "created_at": "2026-10-17T05:04:22.665991+00:00",
   "source_checkpoint": {
-    "file": "best_model.pt",
-    "sha256": "eda2c9cf17a681aa08ba29734d85f3dc67bf556bbbf39ddb9aa8ce55b9c48cb9",
-    "bytes": 66995239
+    "file": "model.pt",
+    "sha256": "5196219b3022c31f204e5473043993660f5442f6891a4cd74b58aee017da4661",
+    "bytes": 16315208
   },
   "model_config": {
     "vocab_size": 1968,
@@ -20,9 +20,10 @@
     "architecture_version": 4,
     "encoding": "searchless-fen77-move1-v2",
     "board_symmetry": "canonical",
-    "ffn": "swiglu"
+    "ffn": "swiglu",
+    "repetition_levels": 3
   },
-  "parameters": 4073600,
+  "parameters": 4074176,
   "encoding": {
     "name": "searchless-fen77-move1-v2",
     "actions": 1968,
@@ -39,6 +40,13 @@
       },
       {
         "name": "move_tokens",
+        "dtype": "int64",
+        "shape": [
+          "moves"
+        ]
+      },
+      {
+        "name": "repetition_levels",
         "dtype": "int64",
         "shape": [
           "moves"
@@ -65,7 +73,8 @@
     "board_tokens": "start token plus 77 reference FEN tokens of the side-to-move position",
     "move_tokens": "one reference action index per scored move, in python-chess legal-move order",
     "action_values": "expected win percentage (0-100) for the side to move from the value-bin softmax; not centipawns",
-    "selection": "first maximum in legal-move order; positions without legal moves are handled outside the model"
+    "selection": "first maximum in legal-move order; positions without legal moves are handled outside the model",
+    "repetition_levels": "per scored move, from the game history (repetition.py): 0 the resulting position has not occurred, 1 it occurred once, 2 a threefold draw becomes claimable"
   },
   "precision": "float32",
   "onnx": {
@@ -84,8 +93,8 @@
   },
   "files": {
     "model.onnx": {
-      "bytes": 16835282,
-      "sha256": "8cdc384e14db7da19f35c165c92ad8d34c55974882abcf811d9e77fa3dff2169"
+      "bytes": 16861107,
+      "sha256": "477e2901ed1b2b01295e981514bbbc9f2924be2e4725918a037a0abe5c9160aa"
     },
     "encoding.json": {
       "bytes": 23945,

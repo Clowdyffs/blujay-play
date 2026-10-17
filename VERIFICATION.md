@@ -2,6 +2,16 @@
 
 Records of what was checked, newest first, and the limits of each check.
 
+## Repetition-aware model — 2026-10-17
+
+Replaced the mate-distance production model with the same network plus its learned per-move repetition input (training repository issue #93): only the repetition embedding was trained, with the network frozen and level 0 fixed at zero, so positions without a repeatable move score exactly as before. New path `models/blujay-477e2901ed1b/`; model SHA-256 `477e2901ed1b2b01295e981514bbbc9f2924be2e4725918a037a0abe5c9160aa`, 4,074,176 parameters. This is the first artifact with the `board_tokens,move_tokens,repetition_levels` contract; `src/repetition.js` supplies the levels from the game history (checked against the training repository's fixture in `npm test`). The old model directory was removed rather than overwritten.
+
+In the training repository, PyTorch/ONNX parity agreed on 534 of 534 positions, including game histories (max action-value error 2.3e-4). Driving this app's production module worker in Chromium 156 with the export's 84 reference rows (histories replayed, levels supplied) matched 84/84 top moves with max error 4.0e-4, including the 6 rows with nonzero levels; omitting the levels fails with a clear error. Its play evaluation: 739 of 989 held-out won positions converted against Stockfish 19 at 100k nodes (previous model 570) and 55.0% over 684 paired-color games against the previous model, with level-position holding unchanged within noise.
+
+`npm run check` passed 17 tests, hash verification and static-only asset checks (27 files). With the production build served by `vite preview`, Playwright's Chromium chose Black and pressed Play: the page downloaded only the new model path, the model played its first move, and no console errors appeared.
+
+Only Chromium was exercised.
+
 ## Mate-distance production model — 2026-10-16
 
 Replaced the mate-distance fine-tune with epoch 8 (averaged weights) of the training repository's 12-epoch 4M run `move-set-4m-matedist-12epochs-20261016T204244Z`, trained from scratch on the full corpus with mate-distance labels (training repository issue #93, PR #99). New path `models/blujay-8cdc384e14db/`; model SHA-256 `8cdc384e14db7da19f35c165c92ad8d34c55974882abcf811d9e77fa3dff2169`, 4,073,600 parameters, 16,835,282 bytes. The tensor contract and `encoding.json` bytes are unchanged (no repetition input). The old model directory was removed rather than overwritten.

@@ -18,7 +18,8 @@ export async function verifyBrowser({ workerUrl, engineConfig, fixtures }) {
     await call('load', engineConfig);
     let matching = 0, maxError = 0;
     for (const f of fixtures) {
-      const result = await call('evaluate', { fen: f.fen, moves: f.moves });
+      // Repetition-aware artifacts: rows carry the position reached by their history and its levels.
+      const result = await call('evaluate', { fen: f.fen, moves: f.moves, levels: f.repetition_levels });
       if (result.move !== f.best_move || result.values.length !== f.action_values.length) throw new Error('Reference move or score-count mismatch.');
       matching++;
       for (let i = 0; i < result.values.length; i++) maxError = Math.max(maxError, Math.abs(result.values[i] - f.action_values[i]));
