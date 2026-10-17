@@ -1,12 +1,12 @@
 {
   "format": "blujay-onnx-artifact",
   "format_version": 1,
-  "name": "model-fp32",
-  "created_at": "2026-10-16T16:14:03.936475+00:00",
+  "name": "best_model-e8-ema-fp32",
+  "created_at": "2026-10-17T03:21:10.759871+00:00",
   "source_checkpoint": {
-    "file": "model.pt",
-    "sha256": "1054bfd25eeb3880584a8591bf16d4cd4b4a97c177bcb007c6e2f374d671d0a7",
-    "bytes": 16312525
+    "file": "best_model.pt",
+    "sha256": "eda2c9cf17a681aa08ba29734d85f3dc67bf556bbbf39ddb9aa8ce55b9c48cb9",
+    "bytes": 66995239
   },
   "model_config": {
     "vocab_size": 1968,
@@ -84,8 +84,8 @@
   },
   "files": {
     "model.onnx": {
-      "bytes": 16836525,
-      "sha256": "4f369b2262727c24b0aad9ea5c89cb7f06f4c3ddfa2f5ba9fc68a6cc780da54a"
+      "bytes": 16835282,
+      "sha256": "8cdc384e14db7da19f35c165c92ad8d34c55974882abcf811d9e77fa3dff2169"
     },
     "encoding.json": {
       "bytes": 23945,

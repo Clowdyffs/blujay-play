@@ -2,6 +2,16 @@
 
 Records of what was checked, newest first, and the limits of each check.
 
+## Mate-distance production model — 2026-10-16
+
+Replaced the mate-distance fine-tune with epoch 8 (averaged weights) of the training repository's 12-epoch 4M run `move-set-4m-matedist-12epochs-20261016T204244Z`, trained from scratch on the full corpus with mate-distance labels (training repository issue #93, PR #99). New path `models/blujay-8cdc384e14db/`; model SHA-256 `8cdc384e14db7da19f35c165c92ad8d34c55974882abcf811d9e77fa3dff2169`, 4,073,600 parameters, 16,835,282 bytes. The tensor contract and `encoding.json` bytes are unchanged (no repetition input). The old model directory was removed rather than overwritten.
+
+In the training repository, PyTorch/ONNX parity agreed on 527 of 527 sampled positions (max action-value error 2.3e-4); its browser benchmark in Chromium 156 with ONNX Runtime Web 1.30.0 matched 79/79 top moves with 0 token mismatches and max error 4.0e-4, about 13 ms per position warm. Its play evaluation: 570 of 989 held-out won positions converted against Stockfish 19 at 100k nodes (previous model 541, the epoch-10 model 75) and 55.8% over 684 paired-color games against the previous model, with no search.
+
+`npm run check` passed 17 tests, hash verification and static-only asset checks (27 files). With the production build served by `vite preview`, Playwright's Chromium chose Black and pressed Play: the page downloaded only the new model path, the model played `e4`, and no console errors appeared.
+
+Only Chromium was exercised; layout and other browsers were not rechecked for this weight-only change.
+
 ## Mate-distance fine-tune — 2026-10-16
 
 Replaced move-set v4 epoch 10 with a 12,000-update fine-tune of it trained with mate-distance labels (faster forced wins score higher; training repository issue #93). New path `models/blujay-4f369b226272/`; model SHA-256 `4f369b2262727c24b0aad9ea5c89cb7f06f4c3ddfa2f5ba9fc68a6cc780da54a`, source checkpoint SHA-256 `1054bfd2…d0a7`, 4,073,600 parameters, 16,836,525 bytes. The tensor contract and `encoding.json` bytes are unchanged, so the adapter and runtime were not modified. The old model directory was removed rather than overwritten.
