@@ -1,12 +1,12 @@
 {
   "format": "blujay-onnx-artifact",
   "format_version": 1,
-  "name": "repetition-only-e8-fp32",
-  "created_at": "2026-10-17T05:04:22.665991+00:00",
+  "name": "fullrecipe-e9-fp32",
+  "created_at": "2026-10-18T14:49:46.690864+00:00",
   "source_checkpoint": {
-    "file": "model.pt",
-    "sha256": "5196219b3022c31f204e5473043993660f5442f6891a4cd74b58aee017da4661",
-    "bytes": 16315208
+    "file": "best_model.pt",
+    "sha256": "15f1005435f4e64166ae3c974cb21eebad615226ac4cf22c5b2f1bf38580603d",
+    "bytes": 59788687
   },
   "model_config": {
     "vocab_size": 1968,
@@ -21,9 +21,11 @@
     "encoding": "searchless-fen77-move1-v2",
     "board_symmetry": "canonical",
     "ffn": "swiglu",
-    "repetition_levels": 3
+    "repetition_levels": 3,
+    "square_bias": true,
+    "compact_embedding": true
   },
-  "parameters": 4074176,
+  "parameters": 3713072,
   "encoding": {
     "name": "searchless-fen77-move1-v2",
     "actions": 1968,
@@ -89,12 +91,12 @@
     "onnxscript": "0.7.2",
     "onnxruntime": "1.30.0",
     "python_chess": "1.11.2",
-    "platform": "Linux-7.2.9-arch1-1-x86_64-with-glibc2.44"
+    "platform": "Linux-7.2.10-arch1-1-x86_64-with-glibc2.44"
   },
   "files": {
     "model.onnx": {
-      "bytes": 16861107,
-      "sha256": "477e2901ed1b2b01295e981514bbbc9f2924be2e4725918a037a0abe5c9160aa"
+      "bytes": 15280957,
+      "sha256": "9172db0114cd82a8759332975f2d97776b4f744a6d40a4ab62e959dd0df32667"
     },
     "encoding.json": {
       "bytes": 23945,

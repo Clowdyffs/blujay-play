@@ -2,6 +2,16 @@
 
 Records of what was checked, newest first, and the limits of each check.
 
+## Full-recipe model — 2026-10-18
+
+Replaced the repetition-aware model with epoch 9 (averaged weights, validation-loss pick) of the training repository's 12-epoch 4M run `move-set-4m-fullrecipe-12epochs-20261018T062834Z` (issue #107): mate-distance labels, a learned square-pair attention bias, a compact board-token embedding, and the repetition input trained from the start instead of afterwards. New path `models/blujay-9172db0114cd/`; model SHA-256 `9172db0114cd82a8759332975f2d97776b4f744a6d40a4ab62e959dd0df32667`, source checkpoint SHA-256 `15f10054…603d`, 3,713,072 parameters, 15,280,957 bytes. The tensor contract (`board_tokens,move_tokens,repetition_levels`) and `encoding.json` bytes are unchanged, so the adapter, runtime and `src/repetition.js` were not modified. The old model directory was removed rather than overwritten.
+
+In the training repository, PyTorch/ONNX parity agreed on 86 of 86 reference positions (max action-value error 2.3e-4), and ONNX Runtime Web 1.30.0 (WASM) in Chromium 156 matched 86/86 top moves with max error 4.4e-4. Driving this app's production module worker in Chromium 156 with the export's 84 scored reference rows (histories replayed, levels supplied) matched 84/84 top moves with max error 4.4e-4, including the 6 rows with nonzero levels. Its play evaluation against Stockfish 19: 760 of 989 held-out won positions converted (previous model 739; repetition draws 131 against 78) and level positions held 17.5 / 41.5 points of 300 at 100k / 2k nodes (previous 13.0 / 21.5); 62.9% (+91 Elo, 95% interval +65 to +118) over 684 paired-color games against the previous model.
+
+`npm run check` passed 17 tests, hash verification and static-only asset checks (27 files). With the production build served by `vite preview`, Playwright's Chromium chose Black and pressed Play: the page downloaded only the new model path, the model played its first move (d4), and no console errors appeared.
+
+Only Chromium was exercised.
+
 ## Repetition-aware model — 2026-10-17
 
 Replaced the mate-distance production model with the same network plus its learned per-move repetition input (training repository issue #93): only the repetition embedding was trained, with the network frozen and level 0 fixed at zero, so positions without a repeatable move score exactly as before. New path `models/blujay-477e2901ed1b/`; model SHA-256 `477e2901ed1b2b01295e981514bbbc9f2924be2e4725918a037a0abe5c9160aa`, 4,074,176 parameters. This is the first artifact with the `board_tokens,move_tokens,repetition_levels` contract; `src/repetition.js` supplies the levels from the game history (checked against the training repository's fixture in `npm test`). The old model directory was removed rather than overwritten.
