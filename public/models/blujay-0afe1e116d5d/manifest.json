@@ -1,12 +1,12 @@
 {
   "format": "blujay-onnx-artifact",
   "format_version": 1,
-  "name": "fullrecipe-e9-fp32",
-  "created_at": "2026-10-18T14:49:46.690864+00:00",
+  "name": "fullrecipe-v3-e10-fp32",
+  "created_at": "2026-10-25T16:58:52.781043+00:00",
   "source_checkpoint": {
     "file": "best_model.pt",
-    "sha256": "15f1005435f4e64166ae3c974cb21eebad615226ac4cf22c5b2f1bf38580603d",
-    "bytes": 59788687
+    "sha256": "b0d75aa8e0ed954a06afa7f45944b9d700bcb465361e9abc8af6b2c116796dab",
+    "bytes": 59790415
   },
   "model_config": {
     "vocab_size": 1968,
@@ -95,8 +95,8 @@
   },
   "files": {
     "model.onnx": {
-      "bytes": 15280957,
-      "sha256": "9172db0114cd82a8759332975f2d97776b4f744a6d40a4ab62e959dd0df32667"
+      "bytes": 15277972,
+      "sha256": "0afe1e116d5dc965e203f133c429683773e1a19c8cd8a7329417e57a646c306b"
     },
     "encoding.json": {
       "bytes": 23945,

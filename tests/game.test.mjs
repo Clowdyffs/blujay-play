@@ -4,7 +4,7 @@ import { Chess } from 'chess.js';
 import { Game, legalDests, toUci } from '../src/game.js';
 import { encodeBoard, selectBest } from '../src/engine/encoding.js';
 import { readFile } from 'node:fs/promises';
-const encoding = JSON.parse(await readFile(new URL('../public/models/blujay-9172db0114cd/encoding.json', import.meta.url)));
+const encoding = JSON.parse(await readFile(new URL('../public/models/blujay-0afe1e116d5d/encoding.json', import.meta.url)));
 const defer = () => { let resolve, reject; const promise = new Promise((a,b) => { resolve=a; reject=b; }); return { promise, resolve, reject }; };
 const engineMove = move => ({ choose: async () => ({ move, milliseconds: 12 }) });
 
