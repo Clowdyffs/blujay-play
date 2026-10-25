@@ -2,6 +2,16 @@
 
 Records of what was checked, newest first, and the limits of each check.
 
+## Full-recipe v3 model — 2026-10-25
+
+Replaced the full-recipe model with epoch 10 (averaged weights, validation-loss pick) of the training repository's 12-epoch 4M run `move-set-4m-fullrecipe-v3-12epochs-20261025T115825Z` (experiment `2026-10-25-full-recipe-v2`): the same architecture and recipe, trained additionally on repetition levels replayed from the corpus's source games, DTZ-ordered tablebase wins, positions from Blujay-bot's own Lichess games, deeper labels for the worst-labelled positions, and history-aware outcomes for repeating moves in won positions. New path `models/blujay-0afe1e116d5d/`; model SHA-256 `0afe1e116d5dc965e203f133c429683773e1a19c8cd8a7329417e57a646c306b`, source checkpoint SHA-256 `b0d75aa8…6dab`, 3,713,072 parameters, 15,277,972 bytes. The tensor contract (`board_tokens,move_tokens,repetition_levels`) and `encoding.json` bytes are unchanged, so the adapter, runtime and `src/repetition.js` were not modified. The old model directory was removed rather than overwritten.
+
+In the training repository, PyTorch/ONNX parity passed its tolerances, and ONNX Runtime Web 1.30.0 (WASM) in Chromium 156 matched 86/86 top moves with max action-value error 3.9e-4. Driving this app's module worker (Vite dev server) in Chromium 156 with the export's 84 scored reference rows (histories replayed, levels supplied) matched 84/84 top moves with max error 3.9e-4, including the 6 rows with nonzero levels. Its play evaluation against Stockfish 19: 789 of 989 development-panel won positions converted (previous model 760; repetition draws 81 against 131), 632 of 810 on the untouched final panel (previous 607, +25, 95% interval +3 to +47), level holds unchanged within noise; 58.4% (+59 Elo, 95% interval +33 to +85) over 684 paired-color games against the previous model.
+
+`npm run check` passed 17 tests, hash verification and static-only asset checks (27 files). With the production build served by `vite preview`, Playwright's Chromium chose Black and pressed Play: no model file was requested before Play, the page downloaded only the new model path, the model played its first move (d4), and no console errors appeared.
+
+Only Chromium was exercised.
+
 ## Full-recipe model — 2026-10-18
 
 Replaced the repetition-aware model with epoch 9 (averaged weights, validation-loss pick) of the training repository's 12-epoch 4M run `move-set-4m-fullrecipe-12epochs-20261018T062834Z` (issue #107): mate-distance labels, a learned square-pair attention bias, a compact board-token embedding, and the repetition input trained from the start instead of afterwards. New path `models/blujay-9172db0114cd/`; model SHA-256 `9172db0114cd82a8759332975f2d97776b4f744a6d40a4ab62e959dd0df32667`, source checkpoint SHA-256 `15f10054…603d`, 3,713,072 parameters, 15,280,957 bytes. The tensor contract (`board_tokens,move_tokens,repetition_levels`) and `encoding.json` bytes are unchanged, so the adapter, runtime and `src/repetition.js` were not modified. The old model directory was removed rather than overwritten.
